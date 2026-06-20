@@ -2,13 +2,14 @@ import { Button } from "@/components/ui/button"
 import { Play, Square, RotateCcw, Loader2 } from "lucide-react"
 import { useTimer } from "@/hooks/useTimer"
 import { createLogger } from "@/lib/logger"
+import { ErrorBoundarySmall } from "./ErrorBoundarySmall"
 
 const log = createLogger('Timer')
 
-export function Timer() {
-    const { time, isRunning, start, stop, reset, formatTime, isLoading } = useTimer()
+function TimerContent() {
+    const { time, isRunning, isStarting, start, stop, reset, formatTime, isLoading } = useTimer()
 
-    log.debug(`🔄 Render: time=${formatTime(time)}, running=${isRunning}, loading=${isLoading}`)
+    log.debug(`🔄 Render: time=${formatTime(time)}, running=${isRunning}, starting=${isStarting}, loading=${isLoading}`)
 
     const handleStart = () => {
         log.debug('🖱️ User clicked Start')
@@ -52,8 +53,13 @@ export function Timer() {
                         onClick={handleStart}
                         size="icon"
                         className="h-16 w-16 rounded-full bg-primary hover:bg-primary/90 transition-all hover:scale-105"
+                        disabled={isStarting}
                     >
-                        <Play className="h-8 w-8 fill-current" />
+                        {isStarting ? (
+                            <Loader2 className="h-8 w-8 animate-spin" />
+                        ) : (
+                            <Play className="h-8 w-8 fill-current" />
+                        )}
                         <span className="sr-only">Start</span>
                     </Button>
                 ) : (
@@ -80,5 +86,29 @@ export function Timer() {
                 </Button>
             </div>
         </div>
+    )
+}
+
+// Main Timer export with error boundary
+export function Timer() {
+    return (
+        <ErrorBoundarySmall
+            fallback={
+                <div className="flex flex-col items-center gap-4 p-6">
+                    <p className="text-sm text-muted-foreground">
+                        ⚠️ Timer component encountered an error. Please refresh the page.
+                    </p>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => window.location.reload()}
+                    >
+                        Refresh
+                    </Button>
+                </div>
+            }
+        >
+            <TimerContent />
+        </ErrorBoundarySmall>
     )
 }

@@ -1,3 +1,4 @@
+// src/hooks/useTimer.ts
 import { useState, useEffect, useRef } from 'react'
 import { sessionService } from '@/lib/sessionService'
 import type { Session } from '@/lib/supabase'
@@ -8,6 +9,7 @@ const log = createLogger('useTimer')
 interface UseTimerReturn {
     time: number
     isRunning: boolean
+    isStarting: boolean // 👈 ADD THIS
     activeSession: Session | null
     start: () => Promise<void>
     stop: () => Promise<void>
@@ -19,6 +21,7 @@ interface UseTimerReturn {
 export function useTimer(): UseTimerReturn {
     const [time, setTime] = useState(0)
     const [isRunning, setIsRunning] = useState(false)
+    const [isStarting, setIsStarting] = useState(false) // 👈 ADD THIS
     const [activeSession, setActiveSession] = useState<Session | null>(null)
     const [isLoading, setIsLoading] = useState(true)
     const intervalRef = useRef<number | null>(null)
@@ -127,14 +130,22 @@ export function useTimer(): UseTimerReturn {
         }
     }, [isRunning, activeSession, time])
 
-    // Start the timer
+    // 👇 UPDATED: Start the timer with loading state
     const start = async () => {
         log.info('🎯 Start button clicked')
 
+        // Check if already running or starting
         if (isRunning) {
             log.warn('⚠️ Timer already running - ignoring start')
             return
         }
+
+        if (isStarting) {
+            log.warn('⚠️ Timer is already starting - ignoring duplicate request')
+            return
+        }
+
+        setIsStarting(true) // 👈 Show loading state
 
         try {
             log.debug('📝 Creating new session in database...')
@@ -142,17 +153,28 @@ export function useTimer(): UseTimerReturn {
 
             if (!session) {
                 log.error('❌ Failed to create session - start aborted')
+                setIsStarting(false)
                 return
             }
 
             log.info(`✅ Session created successfully with ID: ${session.id}`)
+
+            // 🔥 FIX: Calculate actual elapsed time from database timestamp
+            const startTime = new Date(session.start_at).getTime()
+            const now = Date.now()
+            const initialElapsed = Math.floor((now - startTime) / 1000)
+
             setActiveSession(session)
-            setTime(0)
+            setTime(initialElapsed) // Use actual elapsed time
             setIsRunning(true)
-            log.debug('▶️ Timer started from 0')
+            log.debug(`▶️ Timer started from ${formatTime(initialElapsed)}`)
             startTimer()
+
+            setIsStarting(false) // 👈 Clear loading state
+
         } catch (error) {
             log.error('❌ Error starting timer:', error)
+            setIsStarting(false) // 👈 Clear loading state on error
         }
     }
 
@@ -222,6 +244,7 @@ export function useTimer(): UseTimerReturn {
     return {
         time,
         isRunning,
+        isStarting, // 👈 EXPOSE THIS
         activeSession,
         start,
         stop,
