@@ -1,6 +1,7 @@
 // src/lib/hourlyUtils.ts
 import type { Session } from './supabase'
 import { parseISO } from 'date-fns'
+import { getDurationSeconds } from './utils'
 
 export const HOURLY_GOAL_SECONDS = 30 * 60 // 30 minutes
 
@@ -42,9 +43,13 @@ export function calculateHourlyDistribution(sessions: Session[]): HourlyData[] {
 }
 
 /**
- * Get the number of productive slots (hours with 30m+ focus)
+ * Get Focus Points - each 30m+ single session = 1 point
  */
-export function getProductiveSlots(sessions: Session[]): number {
-    const hourlyData = calculateHourlyDistribution(sessions)
-    return hourlyData.filter(h => h.totalSeconds >= HOURLY_GOAL_SECONDS).length
+export function getFocusPoints(sessions: Session[]): number {
+    const FOCUS_GOAL_SECONDS = 30 * 60 // 30 minutes
+
+    return sessions.filter(session => {
+        const duration = getDurationSeconds(session.start_at, session.end_at!)
+        return duration >= FOCUS_GOAL_SECONDS
+    }).length
 }

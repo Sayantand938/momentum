@@ -7,7 +7,7 @@ import { WeeklyRecords } from './dashboard/WeeklyRecords'
 import { HourlyDistribution } from './dashboard/HourlyDistribution'
 import { useDashboardStats } from './dashboard/useDashboardStats'
 import { getShiftStats } from './dashboard/shiftUtils'
-import { getProductiveSlots } from '@/lib/hourlyUtils'
+import { getFocusPoints } from '@/lib/hourlyUtils'
 
 function DashboardContent() {
     const { loading, todayStats, weekStats, monthStats, weekSessions, monthSessions, todaySessions, formatTime } = useDashboardStats()
@@ -27,10 +27,10 @@ function DashboardContent() {
     const weekShiftStats = weekSessions ? getShiftStats(weekSessions) : null
     const monthShiftStats = monthSessions ? getShiftStats(monthSessions) : null
 
-    // 👇 Calculate Power Slots for each period
-    const todayPowerSlots = getProductiveSlots(todaySessions)
-    const weekPowerSlots = getProductiveSlots(weekSessions)
-    const monthPowerSlots = getProductiveSlots(monthSessions)
+    // 👇 Calculate Focus Points for each period (each 30m+ session = 1 point)
+    const todayFocusPoints = getFocusPoints(todaySessions)
+    const weekFocusPoints = getFocusPoints(weekSessions)
+    const monthFocusPoints = getFocusPoints(monthSessions)
 
     return (
         <div className="container max-w-6xl mx-auto p-4 pt-2">
@@ -46,7 +46,7 @@ function DashboardContent() {
                 stats={todayStats}
                 formatTime={formatTime}
                 shiftStats={todayShiftStats}
-                productiveSlots={todayPowerSlots}
+                focusPoints={todayFocusPoints}
             />
 
             {/* Hourly Distribution - Today */}
@@ -63,7 +63,7 @@ function DashboardContent() {
                     stats={weekStats}
                     formatTime={formatTime}
                     shiftStats={weekShiftStats}
-                    productiveSlots={weekPowerSlots}
+                    focusPoints={weekFocusPoints}
                 />
 
                 {weekSessions && weekSessions.length > 0 && (
@@ -80,7 +80,7 @@ function DashboardContent() {
                     stats={monthStats}
                     formatTime={formatTime}
                     shiftStats={monthShiftStats}
-                    productiveSlots={monthPowerSlots}
+                    focusPoints={monthFocusPoints}
                 />
 
                 {monthSessions && monthSessions.length > 0 && (
