@@ -1,6 +1,3 @@
-import { useState, useEffect } from 'react'
-import { supabase, type Session } from '@/lib/supabase'
-import { createLogger } from '@/lib/logger'
 import { ErrorBoundarySmall } from './ErrorBoundarySmall'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -10,109 +7,28 @@ import {
     History as HistoryIcon,
     Loader2,
     Calendar as CalendarIcon,
-    Clock,
     Search,
     X
 } from 'lucide-react'
-import { format, parseISO, isSameDay } from 'date-fns'
-
-const log = createLogger('History')
+import { format } from 'date-fns'
+import { HistoryTable } from './history/HistoryTable'
+import { useHistory } from './history/useHistory'
 
 function HistoryContent() {
-    const [allSessions, setAllSessions] = useState<Session[]>([])
-    const [filteredSessions, setFilteredSessions] = useState<Session[]>([])
-    const [loading, setLoading] = useState(true)
-    const [selectedDate, setSelectedDate] = useState<Date>(new Date())
-    const [searchTerm, setSearchTerm] = useState('')
-    const [isCalendarOpen, setIsCalendarOpen] = useState(false)
-
-    useEffect(() => {
-        fetchSessions()
-    }, [])
-
-    useEffect(() => {
-        filterSessions()
-    }, [allSessions, selectedDate, searchTerm])
-
-    const fetchSessions = async () => {
-        try {
-            log.debug('📜 Fetching session history...')
-            const { data, error } = await supabase
-                .from('sessions')
-                .select('*')
-                .not('end_at', 'is', null)
-                .order('start_at', { ascending: false })
-
-            if (error) throw error
-
-            const completed = data as Session[]
-            log.info(`✅ Fetched ${completed.length} completed sessions`)
-            setAllSessions(completed)
-        } catch (error) {
-            log.error('❌ Error fetching sessions:', error)
-        } finally {
-            setLoading(false)
-        }
-    }
-
-    const filterSessions = () => {
-        let filtered = allSessions.filter(session => {
-            // Filter by date
-            const sessionDate = parseISO(session.start_at)
-            const isSameDate = isSameDay(sessionDate, selectedDate)
-            if (!isSameDate) return false
-
-            // Filter by search term (search in date or duration)
-            if (searchTerm) {
-                const dateStr = format(sessionDate, 'MMM d, yyyy')
-                const duration = formatDuration(session.start_at, session.end_at!)
-                const searchLower = searchTerm.toLowerCase()
-                return dateStr.toLowerCase().includes(searchLower) ||
-                    duration.toLowerCase().includes(searchLower)
-            }
-
-            return true
-        })
-
-        setFilteredSessions(filtered)
-    }
-
-    const formatDate = (timestamp: string) => {
-        return format(parseISO(timestamp), 'MMM d, yyyy')
-    }
-
-    const formatTime = (timestamp: string) => {
-        return format(parseISO(timestamp), 'h:mm a')
-    }
-
-    const formatDuration = (startAt: string, endAt: string) => {
-        const start = parseISO(startAt).getTime()
-        const end = parseISO(endAt).getTime()
-        const seconds = Math.floor((end - start) / 1000)
-
-        const hours = Math.floor(seconds / 3600)
-        const minutes = Math.floor((seconds % 3600) / 60)
-        const remainingSeconds = seconds % 60
-
-        if (hours > 0) {
-            return `${hours}h ${minutes}m ${remainingSeconds}s`
-        }
-        if (minutes > 0) {
-            return `${minutes}m ${remainingSeconds}s`
-        }
-        return `${remainingSeconds}s`
-    }
-
-    const handleDateSelect = (date: Date | undefined) => {
-        if (date) {
-            setSelectedDate(date)
-            setIsCalendarOpen(false) // 👈 Close calendar after selection
-        }
-    }
-
-    const clearSearch = () => {
-        setSearchTerm('')
-    }
+    const {
+        loading,
+        filteredSessions,
+        selectedDate,
+        searchTerm,
+        isCalendarOpen,
+        setSearchTerm,
+        setIsCalendarOpen,
+        handleDateSelect,
+        clearSearch,
+        formatDate,
+        formatTime,
+        formatDuration,
+    } = useHistory()
 
     if (loading) {
         return (
@@ -130,7 +46,7 @@ function HistoryContent() {
                 <h1 className="text-2xl font-bold">History</h1>
             </div>
 
-            {/* Search and Date Picker - Same Row */}
+            {/* Search and Date Picker */}
             <div className="flex items-center gap-3 mb-4">
                 <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -177,67 +93,15 @@ function HistoryContent() {
                     </CardContent>
                 </Card>
             ) : (
-                <div className="rounded-lg border border-border/40 overflow-x-auto custom-scrollbar">
-                    <table className="w-full min-w-[500px]">
-                        <thead>
-                            <tr className="border-b border-border/40 bg-muted/30">
-                                <th className="text-left text-xs font-medium text-muted-foreground uppercase tracking-wider px-4 py-3 w-16">
-                                    #
-                                </th>
-                                <th className="text-left text-xs font-medium text-muted-foreground uppercase tracking-wider px-4 py-3">
-                                    Date
-                                </th>
-                                <th className="text-left text-xs font-medium text-muted-foreground uppercase tracking-wider px-4 py-3">
-                                    Start Time
-                                </th>
-                                <th className="text-left text-xs font-medium text-muted-foreground uppercase tracking-wider px-4 py-3">
-                                    End Time
-                                </th>
-                                <th className="text-right text-xs font-medium text-muted-foreground uppercase tracking-wider px-4 py-3">
-                                    Duration
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {filteredSessions.map((session, index) => (
-                                <tr
-                                    key={session.id}
-                                    className={cn(
-                                        "border-b border-border/20 last:border-0 hover:bg-muted/20 transition-colors",
-                                        index % 2 === 0 ? "bg-background" : "bg-muted/5"
-                                    )}
-                                >
-                                    <td className="px-4 py-3 text-sm text-muted-foreground text-center">
-                                        {index + 1}
-                                    </td>
-                                    <td className="px-4 py-3 text-sm font-medium whitespace-nowrap">
-                                        {formatDate(session.start_at)}
-                                    </td>
-                                    <td className="px-4 py-3 text-sm whitespace-nowrap">
-                                        <div className="flex items-center gap-2">
-                                            <Clock className="h-3 w-3 text-muted-foreground shrink-0" />
-                                            {formatTime(session.start_at)}
-                                        </div>
-                                    </td>
-                                    <td className="px-4 py-3 text-sm text-muted-foreground whitespace-nowrap">
-                                        {formatTime(session.end_at!)}
-                                    </td>
-                                    <td className="px-4 py-3 text-sm text-right font-medium text-foreground whitespace-nowrap">
-                                        {formatDuration(session.start_at, session.end_at!)}
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
+                <HistoryTable
+                    sessions={filteredSessions}
+                    formatDate={formatDate}
+                    formatTime={formatTime}
+                    formatDuration={formatDuration}
+                />
             )}
         </div>
     )
-}
-
-// Helper function for className merging
-function cn(...classes: (string | boolean | undefined)[]) {
-    return classes.filter(Boolean).join(' ')
 }
 
 // Main History export with error boundary
