@@ -1,8 +1,7 @@
 import { format, parseISO, startOfMonth, endOfMonth, endOfWeek, eachWeekOfInterval, isWithinInterval } from 'date-fns'
 import type { Session } from '@/lib/supabase'
-import { sessionService } from '@/lib/sessionService'
+import { getDurationSeconds } from '@/lib/utils' // 👈 Changed import
 import { ProgressTable } from './ProgressTable'
-import { formatCompactTime } from '@/lib/utils'
 
 interface WeeklyRecordsProps {
     sessions: Session[]
@@ -29,7 +28,9 @@ export function WeeklyRecords({ sessions }: WeeklyRecordsProps) {
 
         let totalSeconds = 0
         weekSessions.forEach(session => {
-            totalSeconds += sessionService.getElapsedSeconds(session.start_at)
+            // 🔥 FIX: Calculate duration from start_at to end_at
+            const duration = getDurationSeconds(session.start_at, session.end_at!)
+            totalSeconds += duration
         })
 
         const isCurrentWeek = isWithinInterval(now, { start: weekStart, end: weekEnd })

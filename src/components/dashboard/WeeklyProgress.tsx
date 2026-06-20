@@ -1,8 +1,7 @@
 import { format, parseISO, startOfWeek, endOfWeek, eachDayOfInterval, isWithinInterval } from 'date-fns'
 import type { Session } from '@/lib/supabase'
-import { sessionService } from '@/lib/sessionService'
+import { getDurationSeconds } from '@/lib/utils' // 👈 Changed import
 import { ProgressTable } from './ProgressTable'
-import { formatCompactTime } from '@/lib/utils'
 
 interface WeeklyProgressProps {
     sessions: Session[]
@@ -28,7 +27,9 @@ export function WeeklyProgress({ sessions }: WeeklyProgressProps) {
 
         let totalSeconds = 0
         daySessions.forEach(session => {
-            totalSeconds += sessionService.getElapsedSeconds(session.start_at)
+            // 🔥 FIX: Calculate duration from start_at to end_at
+            const duration = getDurationSeconds(session.start_at, session.end_at!)
+            totalSeconds += duration
         })
 
         return {

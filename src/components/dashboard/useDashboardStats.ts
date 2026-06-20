@@ -3,7 +3,7 @@ import { supabase, type Session } from '@/lib/supabase'
 import { sessionService } from '@/lib/sessionService'
 import { createLogger } from '@/lib/logger'
 import { parseISO, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns'
-import { formatStatsTime } from '@/lib/utils'
+import { formatStatsTime, getDurationSeconds } from '@/lib/utils' // 👈 Added getDurationSeconds
 
 const log = createLogger('useDashboardStats')
 
@@ -90,7 +90,8 @@ export function useDashboardStats() {
         const durations: number[] = []
 
         sessions.forEach(session => {
-            const duration = sessionService.getElapsedSeconds(session.start_at)
+            // 🔥 FIX: Calculate duration from start_at to end_at, not to now
+            const duration = getDurationSeconds(session.start_at, session.end_at!)
             totalTime += duration
             durations.push(duration)
         })
