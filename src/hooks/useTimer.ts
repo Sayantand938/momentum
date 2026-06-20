@@ -1,13 +1,15 @@
 // src/hooks/useTimer.ts
-import { useState, useEffect, useRef } from 'react'
+import { useEffect } from 'react' // 👈 Added
+import type { Session } from '@/lib/supabase' // 👈 Added
+import { useTimerState } from './useTimer/useTimerState'
+import { useTimerSync } from './useTimer/useTimerSync'
 import { sessionService } from '@/lib/sessionService'
-import type { Session } from '@/lib/supabase'
 import { createLogger } from '@/lib/logger'
 import { formatTimerDisplay, getElapsedSeconds } from '@/lib/utils'
 
 const log = createLogger('useTimer')
 
-interface UseTimerReturn {
+export interface UseTimerReturn {
     time: number
     isRunning: boolean
     isStarting: boolean
@@ -20,14 +22,21 @@ interface UseTimerReturn {
 }
 
 export function useTimer(): UseTimerReturn {
-    const [time, setTime] = useState(0)
-    const [isRunning, setIsRunning] = useState(false)
-    const [isStarting, setIsStarting] = useState(false)
-    const [activeSession, setActiveSession] = useState<Session | null>(null)
-    const [isLoading, setIsLoading] = useState(true)
-    const intervalRef = useRef<number | null>(null)
-    const syncIntervalRef = useRef<number | null>(null)
-    const hasLoadedRef = useRef(false)
+    const {
+        time,
+        isRunning,
+        isStarting,
+        activeSession,
+        isLoading,
+        setTime,
+        setIsRunning,
+        setIsStarting,
+        setActiveSession,
+        setIsLoading,
+        intervalRef,
+        syncIntervalRef,
+        hasLoadedRef,
+    } = useTimerState()
 
     // Load active session on mount
     useEffect(() => {
@@ -86,38 +95,14 @@ export function useTimer(): UseTimerReturn {
         }, 1000)
     }
 
-    // Sync timer with database every 10 seconds when running
-    useEffect(() => {
-        if (isRunning && activeSession) {
-            log.debug('🔄 Starting sync interval (every 10 seconds)')
-            syncIntervalRef.current = window.setInterval(() => {
-                if (activeSession) {
-                    const elapsed = getElapsedSeconds(activeSession.start_at)
-                    const currentTime = time
-                    const diff = Math.abs(elapsed - currentTime)
-
-                    if (diff > 5) {
-                        log.warn(`⚠️ Time drift detected: UI=${formatTimerDisplay(currentTime)}, DB=${formatTimerDisplay(elapsed)}, diff=${diff}s`)
-                        log.debug(`🔄 Syncing timer with database...`)
-                        setTime(elapsed)
-                    }
-                }
-            }, 10000)
-        } else {
-            if (syncIntervalRef.current) {
-                log.debug('⏹️ Stopping sync interval')
-                clearInterval(syncIntervalRef.current)
-                syncIntervalRef.current = null
-            }
-        }
-
-        return () => {
-            if (syncIntervalRef.current) {
-                clearInterval(syncIntervalRef.current)
-                syncIntervalRef.current = null
-            }
-        }
-    }, [isRunning, activeSession, time])
+    // Sync timer with database
+    useTimerSync({
+        isRunning,
+        activeSession,
+        time,
+        setTime,
+        syncIntervalRef,
+    })
 
     // Start the timer
     const start = async () => {

@@ -1,5 +1,4 @@
 import { type Session } from '@/lib/supabase'
-import { Clock } from 'lucide-react'
 
 interface HistoryTableProps {
     sessions: Session[]
@@ -47,10 +46,7 @@ export function HistoryTable({ sessions, formatDate, formatTime, formatDuration 
                                 {formatDate(session.start_at)}
                             </td>
                             <td className="px-4 py-3 text-sm whitespace-nowrap">
-                                <div className="flex items-center gap-2">
-                                    <Clock className="h-3 w-3 text-muted-foreground shrink-0" />
-                                    {formatTime(session.start_at)}
-                                </div>
+                                {formatTime(session.start_at)}
                             </td>
                             <td className="px-4 py-3 text-sm text-muted-foreground whitespace-nowrap">
                                 {formatTime(session.end_at!)}
