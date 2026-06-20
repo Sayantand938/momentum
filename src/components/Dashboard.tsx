@@ -6,6 +6,7 @@ import { WeeklyProgress } from './dashboard/WeeklyProgress'
 import { WeeklyRecords } from './dashboard/WeeklyRecords'
 import { HourlyDistribution } from './dashboard/HourlyDistribution'
 import { useDashboardStats } from './dashboard/useDashboardStats'
+import { getShiftStats } from './dashboard/shiftUtils'
 
 function DashboardContent() {
     const { loading, todayStats, weekStats, monthStats, weekSessions, monthSessions, todaySessions, formatTime } = useDashboardStats()
@@ -20,6 +21,11 @@ function DashboardContent() {
 
     const hasData = todayStats || weekStats || monthStats
 
+    // Calculate shift stats for Today
+    const todayShiftStats = todaySessions ? getShiftStats(todaySessions) : null
+    const weekShiftStats = weekSessions ? getShiftStats(weekSessions) : null
+    const monthShiftStats = monthSessions ? getShiftStats(monthSessions) : null
+
     return (
         <div className="container max-w-6xl mx-auto p-4 pt-2">
             {/* Header */}
@@ -33,6 +39,7 @@ function DashboardContent() {
                 title="Today"
                 stats={todayStats}
                 formatTime={formatTime}
+                shiftStats={todayShiftStats}
             />
 
             {/* Hourly Distribution - Today */}
@@ -48,6 +55,7 @@ function DashboardContent() {
                     title="This Week"
                     stats={weekStats}
                     formatTime={formatTime}
+                    shiftStats={weekShiftStats}
                 />
 
                 {weekSessions && weekSessions.length > 0 && (
@@ -63,6 +71,7 @@ function DashboardContent() {
                     title="This Month"
                     stats={monthStats}
                     formatTime={formatTime}
+                    shiftStats={monthShiftStats}
                 />
 
                 {monthSessions && monthSessions.length > 0 && (

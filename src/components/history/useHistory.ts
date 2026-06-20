@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase, type Session } from '@/lib/supabase'
 import { createLogger } from '@/lib/logger'
-import { format, parseISO, isSameDay } from 'date-fns'
+import { format, parseISO, isSameDay, startOfMonth, endOfMonth } from 'date-fns'
 import { formatShortDate, formatTimeString, getDurationSeconds, formatDuration } from '@/lib/utils'
 
 const log = createLogger('useHistory')
@@ -18,23 +18,36 @@ export function useHistory() {
         fetchSessions()
     }, [])
 
+    // Refetch when selected date changes
+    useEffect(() => {
+        fetchSessions()
+    }, [selectedDate])
+
     useEffect(() => {
         filterSessions()
     }, [allSessions, selectedDate, searchTerm])
 
     const fetchSessions = async () => {
         try {
-            log.debug('📜 Fetching session history...')
+            log.debug(`📜 Fetching sessions for ${format(selectedDate, 'MMM yyyy')}...`)
+            setLoading(true)
+
+            // 👇 Fetch based on selected date's month
+            const monthStart = startOfMonth(selectedDate)
+            const monthEnd = endOfMonth(selectedDate)
+
             const { data, error } = await supabase
                 .from('sessions')
                 .select('*')
                 .not('end_at', 'is', null)
+                .gte('start_at', monthStart.toISOString())
+                .lte('start_at', monthEnd.toISOString())
                 .order('start_at', { ascending: false })
 
             if (error) throw error
 
             const completed = data as Session[]
-            log.info(`✅ Fetched ${completed.length} completed sessions`)
+            log.info(`✅ Fetched ${completed.length} sessions for ${format(selectedDate, 'MMM yyyy')}`)
             setAllSessions(completed)
         } catch (error) {
             log.error('❌ Error fetching sessions:', error)

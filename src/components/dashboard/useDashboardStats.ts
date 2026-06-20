@@ -12,7 +12,7 @@ export function useDashboardStats() {
     const [todayStats, setTodayStats] = useState<Stats | null>(null)
     const [weekStats, setWeekStats] = useState<Stats | null>(null)
     const [monthStats, setMonthStats] = useState<Stats | null>(null)
-    const [todaySessions, setTodaySessions] = useState<Session[]>([]) // 👈 Added
+    const [todaySessions, setTodaySessions] = useState<Session[]>([])
     const [weekSessions, setWeekSessions] = useState<Session[]>([])
     const [monthSessions, setMonthSessions] = useState<Session[]>([])
 
@@ -22,17 +22,24 @@ export function useDashboardStats() {
 
     const fetchSessions = async () => {
         try {
-            log.debug('📊 Fetching sessions for dashboard...')
+            log.debug('📊 Fetching current month sessions for dashboard...')
+
+            // 👇 Only fetch current month
+            const monthStart = startOfMonth(new Date())
+            const monthEnd = endOfMonth(new Date())
+
             const { data, error } = await supabase
                 .from('sessions')
                 .select('*')
                 .not('end_at', 'is', null)
+                .gte('start_at', monthStart.toISOString())
+                .lte('start_at', monthEnd.toISOString())
                 .order('start_at', { ascending: false })
 
             if (error) throw error
 
             const completed = data as Session[]
-            log.info(`✅ Fetched ${completed.length} completed sessions`)
+            log.info(`✅ Fetched ${completed.length} sessions for current month`)
             calculateStats(completed)
         } catch (error) {
             log.error('❌ Error fetching sessions:', error)
@@ -61,7 +68,7 @@ export function useDashboardStats() {
             isWithinInterval(parseISO(s.start_at), { start: monthStart, end: monthEnd })
         )
 
-        setTodaySessions(todaySessions) // 👈 Store today sessions
+        setTodaySessions(todaySessions)
         setWeekSessions(weekSessions)
         setMonthSessions(monthSessions)
         setTodayStats(calculateStatsForSessions(todaySessions))
@@ -74,7 +81,7 @@ export function useDashboardStats() {
         todayStats,
         weekStats,
         monthStats,
-        todaySessions, // 👈 Expose today sessions
+        todaySessions,
         weekSessions,
         monthSessions,
         formatTime: formatStatsTime

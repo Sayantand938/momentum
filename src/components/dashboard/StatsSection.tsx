@@ -12,11 +12,32 @@ interface StatsSectionProps {
     title: string
     stats: Stats | null
     formatTime: (seconds: number) => string
-    showAvg?: boolean // Optional: show average session time
+    showAvg?: boolean
+    shiftStats?: {
+        mostProductive: { name: string; totalSeconds: number },
+        leastProductive: { name: string; totalSeconds: number }
+    } | null
 }
 
-export function StatsSection({ title, stats, formatTime, showAvg = false }: StatsSectionProps) {
+export function StatsSection({ title, stats, formatTime, showAvg = false, shiftStats }: StatsSectionProps) {
     if (!stats) return null
+
+    // If shiftStats is provided, use shift names instead of time slots
+    const mostProductiveValue = shiftStats ? (
+        <div className="text-xl font-bold">
+            {shiftStats.mostProductive.name}
+        </div>
+    ) : (
+        stats.mostProductiveSlot
+    )
+
+    const leastProductiveValue = shiftStats ? (
+        <div className="text-xl font-bold">
+            {shiftStats.leastProductive.name}
+        </div>
+    ) : (
+        stats.leastProductiveSlot
+    )
 
     const statCards = [
         {
@@ -36,20 +57,19 @@ export function StatsSection({ title, stats, formatTime, showAvg = false }: Stat
         {
             id: 'most-productive',
             title: 'Most Productive',
-            value: stats.mostProductiveSlot,
+            value: mostProductiveValue,
             icon: 'TrendingUp' as const,
             color: 'text-green-500'
         },
         {
             id: 'least-productive',
             title: 'Least Productive',
-            value: stats.leastProductiveSlot,
+            value: leastProductiveValue,
             icon: 'TrendingDown' as const,
             color: 'text-red-500'
         }
     ]
 
-    // If showAvg is true, replace the least productive with average session time
     if (showAvg) {
         statCards[3] = {
             id: 'avg-session',

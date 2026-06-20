@@ -3,7 +3,7 @@ import { Clock, Activity, TrendingUp, TrendingDown } from 'lucide-react'
 
 interface StatsCardProps {
     title: string
-    value: string | number
+    value: string | number | React.ReactNode // 👈 Allow ReactNode
     icon: 'Clock' | 'Activity' | 'TrendingUp' | 'TrendingDown'
     color?: string
 }
@@ -31,7 +31,7 @@ export function StatsCard({ title, value, icon, color = 'text-primary' }: StatsC
                 <div className="flex items-center justify-between">
                     <div>
                         <p className="text-sm text-muted-foreground">{title}</p>
-                        <p className="text-2xl font-bold mt-1">{value}</p>
+                        <div className="text-2xl font-bold mt-1">{value}</div>
                     </div>
                     <div className={`p-2 rounded-full bg-primary/10 ${colorClass}`}>
                         <Icon className="h-5 w-5" />
