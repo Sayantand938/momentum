@@ -9,7 +9,7 @@ import { useDashboardStats } from './dashboard/useDashboardStats'
 import { getShiftStats } from './dashboard/shiftUtils'
 
 function DashboardContent() {
-    const { loading, todayStats, weekStats, monthStats, weekSessions, monthSessions, todaySessions, formatTime } = useDashboardStats()
+    const { loading, todayStats, weekStats, monthStats, weekSessions, monthSessions, todaySessions, productiveSlots, formatTime } = useDashboardStats()
 
     if (loading) {
         return (
@@ -40,6 +40,7 @@ function DashboardContent() {
                 stats={todayStats}
                 formatTime={formatTime}
                 shiftStats={todayShiftStats}
+                productiveSlots={productiveSlots} // 👈 Pass productive slots
             />
 
             {/* Hourly Distribution - Today */}

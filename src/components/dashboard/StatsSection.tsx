@@ -17,9 +17,10 @@ interface StatsSectionProps {
         mostProductive: { name: string; totalSeconds: number },
         leastProductive: { name: string; totalSeconds: number }
     } | null
+    productiveSlots?: number // 👈 Added
 }
 
-export function StatsSection({ title, stats, formatTime, showAvg = false, shiftStats }: StatsSectionProps) {
+export function StatsSection({ title, stats, formatTime, showAvg = false, shiftStats, productiveSlots }: StatsSectionProps) {
     if (!stats) return null
 
     // If shiftStats is provided, use shift names instead of time slots
@@ -48,9 +49,9 @@ export function StatsSection({ title, stats, formatTime, showAvg = false, shiftS
             color: 'text-primary'
         },
         {
-            id: 'total-sessions',
-            title: 'Total Sessions',
-            value: stats.totalSessions,
+            id: 'power-slots', // 👈 Changed from 'total-sessions'
+            title: 'Power Slots',
+            value: productiveSlots !== undefined ? productiveSlots : stats.totalSessions,
             icon: 'Activity' as const,
             color: 'text-primary'
         },

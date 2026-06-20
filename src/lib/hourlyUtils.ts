@@ -1,0 +1,50 @@
+// src/lib/hourlyUtils.ts
+import type { Session } from './supabase'
+import { parseISO } from 'date-fns'
+
+export const HOURLY_GOAL_SECONDS = 30 * 60 // 30 minutes
+
+export interface HourlyData {
+    hour: number
+    totalSeconds: number
+}
+
+/**
+ * Calculate time spent per hour (8 AM to 11 PM)
+ * Splits sessions across hours (e.g., 8:45-9:15 gives 15m each)
+ */
+export function calculateHourlyDistribution(sessions: Session[]): HourlyData[] {
+    const hours = Array.from({ length: 16 }, (_, i) => i + 8)
+
+    return hours.map(hour => {
+        let totalSeconds = 0
+
+        sessions.forEach(session => {
+            const start = parseISO(session.start_at)
+            const end = parseISO(session.end_at!)
+
+            const hourStart = new Date(start)
+            hourStart.setHours(hour, 0, 0, 0)
+
+            const hourEnd = new Date(start)
+            hourEnd.setHours(hour, 59, 59, 999)
+
+            if (start <= hourEnd && end >= hourStart) {
+                const overlapStart = start > hourStart ? start : hourStart
+                const overlapEnd = end < hourEnd ? end : hourEnd
+                const seconds = Math.floor((overlapEnd.getTime() - overlapStart.getTime()) / 1000)
+                totalSeconds += seconds
+            }
+        })
+
+        return { hour, totalSeconds }
+    })
+}
+
+/**
+ * Get the number of productive slots (hours with 30m+ focus)
+ */
+export function getProductiveSlots(sessions: Session[]): number {
+    const hourlyData = calculateHourlyDistribution(sessions)
+    return hourlyData.filter(h => h.totalSeconds >= HOURLY_GOAL_SECONDS).length
+}

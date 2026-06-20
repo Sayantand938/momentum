@@ -1,69 +1,31 @@
 import { Card, CardContent } from '@/components/ui/card'
 import type { Session } from '@/lib/supabase'
-import { parseISO } from 'date-fns'
+import { calculateHourlyDistribution, HOURLY_GOAL_SECONDS } from '@/lib/hourlyUtils'
 
 interface HourlyDistributionProps {
     sessions: Session[]
 }
 
-// Goal: 30 minutes per hour
-const HOURLY_GOAL_SECONDS = 30 * 60 // 1800 seconds
-
 export function HourlyDistribution({ sessions }: HourlyDistributionProps) {
-    // Define hours from 8 AM to 11 PM (16 hours)
-    const hours = Array.from({ length: 16 }, (_, i) => i + 8)
-
-    // Calculate time per hour (splitting sessions across hours)
-    const hourlyData = hours.map(hour => {
-        let totalSeconds = 0
-
-        sessions.forEach(session => {
-            const start = parseISO(session.start_at)
-            const end = parseISO(session.end_at!)
-
-            // Get the hour boundaries for this hour
-            const hourStart = new Date(start)
-            hourStart.setHours(hour, 0, 0, 0)
-
-            const hourEnd = new Date(start)
-            hourEnd.setHours(hour, 59, 59, 999)
-
-            // Check if session overlaps with this hour
-            if (start <= hourEnd && end >= hourStart) {
-                const overlapStart = start > hourStart ? start : hourStart
-                const overlapEnd = end < hourEnd ? end : hourEnd
-                const seconds = Math.floor((overlapEnd.getTime() - overlapStart.getTime()) / 1000)
-                totalSeconds += seconds
-            }
-        })
-
-        return {
-            hour,
-            totalSeconds
-        }
-    })
+    const hourlyData = calculateHourlyDistribution(sessions)
 
     const formatTime = (seconds: number): string => {
         if (seconds === 0) return '0m'
         const hours = Math.floor(seconds / 3600)
         const minutes = Math.floor((seconds % 3600) / 60)
-        if (hours > 0 && minutes > 0) {
-            return `${hours}h ${minutes}m`
-        }
-        if (hours > 0) {
-            return `${hours}h`
-        }
+        if (hours > 0 && minutes > 0) return `${hours}h ${minutes}m`
+        if (hours > 0) return `${hours}h`
         return `${minutes}m`
     }
 
     const getBarColor = (seconds: number): string => {
         const percentage = (seconds / HOURLY_GOAL_SECONDS) * 100
         if (seconds === 0) return 'bg-muted'
-        if (percentage >= 100) return 'bg-gray-800 dark:bg-gray-200' // 30m+
-        if (percentage >= 75) return 'bg-gray-600 dark:bg-gray-400' // 22.5-30m
-        if (percentage >= 50) return 'bg-gray-400 dark:bg-gray-500' // 15-22.5m
-        if (percentage >= 25) return 'bg-gray-300 dark:bg-gray-600' // 7.5-15m
-        return 'bg-gray-200 dark:bg-gray-700' // <7.5m
+        if (percentage >= 100) return 'bg-gray-800 dark:bg-gray-200'
+        if (percentage >= 75) return 'bg-gray-600 dark:bg-gray-400'
+        if (percentage >= 50) return 'bg-gray-400 dark:bg-gray-500'
+        if (percentage >= 25) return 'bg-gray-300 dark:bg-gray-600'
+        return 'bg-gray-200 dark:bg-gray-700'
     }
 
     const formatHourLabel = (hour: number): string => {
@@ -75,7 +37,6 @@ export function HourlyDistribution({ sessions }: HourlyDistributionProps) {
         return `${hour12}:00 PM`
     }
 
-    // Calculate total time for today
     const totalTodaySeconds = sessions.reduce((sum, session) => {
         return sum + (session.end_at ? Math.floor((new Date(session.end_at).getTime() - new Date(session.start_at).getTime()) / 1000) : 0)
     }, 0)
@@ -92,7 +53,6 @@ export function HourlyDistribution({ sessions }: HourlyDistributionProps) {
                     </span>
                 </div>
 
-                {/* Scrollable Container - 8 slots visible at a time */}
                 <div className="max-h-[320px] overflow-y-auto pr-2 custom-scrollbar">
                     <div className="space-y-2">
                         {hourlyData.map(({ hour, totalSeconds }) => {
@@ -103,20 +63,15 @@ export function HourlyDistribution({ sessions }: HourlyDistributionProps) {
 
                             return (
                                 <div key={hour} className="flex items-center gap-3">
-                                    {/* Hour Label */}
                                     <div className="w-20 text-right text-xs font-medium text-muted-foreground tabular-nums shrink-0">
                                         {formatHourLabel(hour)}
                                     </div>
-
-                                    {/* Progress Bar */}
                                     <div className="flex-1 h-5 bg-muted/30 rounded-md overflow-hidden">
                                         <div
                                             className={`h-full ${barColor} transition-all duration-500 ease-in-out rounded-md`}
                                             style={{ width: `${Math.max(clampedPercentage, 1)}%` }}
                                         />
                                     </div>
-
-                                    {/* Time Label on the right */}
                                     <div className="w-16 text-right text-xs font-medium text-foreground tabular-nums shrink-0">
                                         {timeStr}
                                     </div>

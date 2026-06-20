@@ -4,6 +4,7 @@ import { createLogger } from '@/lib/logger'
 import { parseISO, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns'
 import { formatStatsTime } from '@/lib/utils'
 import { calculateStatsForSessions, type Stats } from './statsCalculator'
+import { getProductiveSlots } from '@/lib/hourlyUtils' // 👈 Import from shared utils
 
 const log = createLogger('useDashboardStats')
 
@@ -15,6 +16,7 @@ export function useDashboardStats() {
     const [todaySessions, setTodaySessions] = useState<Session[]>([])
     const [weekSessions, setWeekSessions] = useState<Session[]>([])
     const [monthSessions, setMonthSessions] = useState<Session[]>([])
+    const [productiveSlots, setProductiveSlots] = useState(0)
 
     useEffect(() => {
         fetchSessions()
@@ -23,8 +25,6 @@ export function useDashboardStats() {
     const fetchSessions = async () => {
         try {
             log.debug('📊 Fetching current month sessions for dashboard...')
-
-            // 👇 Only fetch current month
             const monthStart = startOfMonth(new Date())
             const monthEnd = endOfMonth(new Date())
 
@@ -71,6 +71,10 @@ export function useDashboardStats() {
         setTodaySessions(todaySessions)
         setWeekSessions(weekSessions)
         setMonthSessions(monthSessions)
+
+        // ✅ Use shared utility - no duplicate calculation!
+        setProductiveSlots(getProductiveSlots(todaySessions))
+
         setTodayStats(calculateStatsForSessions(todaySessions))
         setWeekStats(calculateStatsForSessions(weekSessions))
         setMonthStats(calculateStatsForSessions(monthSessions))
@@ -84,6 +88,7 @@ export function useDashboardStats() {
         todaySessions,
         weekSessions,
         monthSessions,
+        productiveSlots,
         formatTime: formatStatsTime
     }
 }
