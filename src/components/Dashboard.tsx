@@ -1,11 +1,13 @@
 import { ErrorBoundarySmall } from './ErrorBoundarySmall'
 import { Card, CardContent } from '@/components/ui/card'
-import { LayoutDashboard, Loader2, Calendar, BarChart3, Target } from 'lucide-react'
+import { LayoutDashboard, Loader2 } from 'lucide-react'
 import { StatsSection } from './dashboard/StatsSection'
+import { WeeklyProgress } from './dashboard/WeeklyProgress'
+import { WeeklyRecords } from './dashboard/WeeklyRecords'
 import { useDashboardStats } from './dashboard/useDashboardStats'
 
 function DashboardContent() {
-    const { loading, todayStats, weekStats, monthStats, formatTime } = useDashboardStats()
+    const { loading, todayStats, weekStats, monthStats, weekSessions, monthSessions, formatTime } = useDashboardStats()
 
     if (loading) {
         return (
@@ -25,13 +27,43 @@ function DashboardContent() {
                 <h1 className="text-2xl font-bold">Dashboard</h1>
             </div>
 
-            {/* Stats Sections */}
-            <StatsSection title="Today" stats={todayStats} icon={Calendar} formatTime={formatTime} />
+            {/* Today Section */}
+            <StatsSection
+                title="Today"
+                stats={todayStats}
+                formatTime={formatTime}
+            />
+
+            {/* This Week Section */}
             <div className="mt-8">
-                <StatsSection title="This Week" stats={weekStats} icon={BarChart3} formatTime={formatTime} />
+                <StatsSection
+                    title="This Week"
+                    stats={weekStats}
+                    formatTime={formatTime}
+                />
+
+                {/* Weekly Progress - Inside This Week */}
+                {weekSessions && weekSessions.length > 0 && (
+                    <div className="mt-4">
+                        <WeeklyProgress sessions={weekSessions} />
+                    </div>
+                )}
             </div>
+
+            {/* This Month Section */}
             <div className="mt-8">
-                <StatsSection title="This Month" stats={monthStats} icon={Target} formatTime={formatTime} />
+                <StatsSection
+                    title="This Month"
+                    stats={monthStats}
+                    formatTime={formatTime}
+                />
+
+                {/* Weekly Records - Inside This Month */}
+                {monthSessions && monthSessions.length > 0 && (
+                    <div className="mt-4">
+                        <WeeklyRecords sessions={monthSessions} />
+                    </div>
+                )}
             </div>
 
             {/* No Data Message */}

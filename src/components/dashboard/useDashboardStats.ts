@@ -19,6 +19,8 @@ export function useDashboardStats() {
     const [todayStats, setTodayStats] = useState<Stats | null>(null)
     const [weekStats, setWeekStats] = useState<Stats | null>(null)
     const [monthStats, setMonthStats] = useState<Stats | null>(null)
+    const [weekSessions, setWeekSessions] = useState<Session[]>([])
+    const [monthSessions, setMonthSessions] = useState<Session[]>([]) // 👈 Added this
 
     useEffect(() => {
         fetchSessions()
@@ -65,6 +67,8 @@ export function useDashboardStats() {
             isWithinInterval(parseISO(s.start_at), { start: monthStart, end: monthEnd })
         )
 
+        setWeekSessions(weekSessions)
+        setMonthSessions(monthSessions) // 👈 Store month sessions
         setTodayStats(calculateStatsForSessions(todaySessions))
         setWeekStats(calculateStatsForSessions(weekSessions))
         setMonthStats(calculateStatsForSessions(monthSessions))
@@ -146,5 +150,5 @@ export function useDashboardStats() {
         return `${remainingSeconds}s`
     }
 
-    return { loading, todayStats, weekStats, monthStats, formatTime }
+    return { loading, todayStats, weekStats, monthStats, weekSessions, monthSessions, formatTime }
 }
