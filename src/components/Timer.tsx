@@ -1,38 +1,32 @@
 import { Button } from "@/components/ui/button"
 import { Play, Square, RotateCcw, Loader2 } from "lucide-react"
 import { useTimer } from "@/hooks/useTimer"
+import { createLogger } from "@/lib/logger"
 
-// Enable/disable debug logs
-const DEBUG = true
-
-function log(...args: any[]) {
-    if (DEBUG) {
-        console.log('[Timer Component]', ...args)
-    }
-}
+const log = createLogger('Timer')
 
 export function Timer() {
     const { time, isRunning, start, stop, reset, formatTime, isLoading } = useTimer()
 
-    log(`🔄 Render: time=${formatTime(time)}, running=${isRunning}, loading=${isLoading}`)
+    log.debug(`🔄 Render: time=${formatTime(time)}, running=${isRunning}, loading=${isLoading}`)
 
     const handleStart = () => {
-        log('🖱️ User clicked Start')
+        log.debug('🖱️ User clicked Start')
         start()
     }
 
     const handleStop = () => {
-        log('🖱️ User clicked Stop')
+        log.debug('🖱️ User clicked Stop')
         stop()
     }
 
     const handleReset = () => {
-        log('🖱️ User clicked Reset')
+        log.debug('🖱️ User clicked Reset')
         reset()
     }
 
     if (isLoading) {
-        log('⏳ Showing loading state...')
+        log.debug('⏳ Showing loading state...')
         return (
             <div className="flex flex-col items-center gap-8">
                 <div className="text-7xl font-bold tracking-wider font-mono tabular-nums opacity-50">
@@ -48,12 +42,10 @@ export function Timer() {
 
     return (
         <div className="flex flex-col items-center gap-10">
-            {/* Timer Display */}
             <div className="text-8xl font-bold tracking-wider font-mono tabular-nums">
                 {formatTime(time)}
             </div>
 
-            {/* Controls - Icon only with larger buttons */}
             <div className="flex items-center gap-4">
                 {!isRunning ? (
                     <Button
@@ -88,7 +80,6 @@ export function Timer() {
                 </Button>
             </div>
 
-            {/* Session status */}
             {isRunning && (
                 <div className="text-sm text-green-500 flex items-center gap-2">
                     <span className="relative flex h-2 w-2">

@@ -1,50 +1,37 @@
 import { supabase, type Session } from './supabase'
+import { createLogger } from './logger'
 
-// Enable/disable debug logs
-const DEBUG = true
-
-function log(...args: any[]) {
-    if (DEBUG) {
-        console.log('[SessionService]', ...args)
-    }
-}
-
-function logError(...args: any[]) {
-    if (DEBUG) {
-        console.error('[SessionService Error]', ...args)
-    }
-}
+const log = createLogger('SessionService')
 
 export const sessionService = {
     // Get active session (where end_at is null)
     async getActiveSession(): Promise<Session | null> {
-        log('🔍 Getting active session...')
+        log.debug('🔍 Getting active session...')
 
         try {
-            // Use filter with null check using the filter syntax
             const { data, error } = await supabase
                 .from('sessions')
                 .select('*')
-                .filter('end_at', 'is', null)  // Changed from .eq to .filter
+                .filter('end_at', 'is', null)
                 .order('created_at', { ascending: false })
                 .limit(1)
                 .maybeSingle()
 
             if (error) {
-                logError('❌ Error fetching active session:', error)
+                log.error('❌ Error fetching active session:', error)
                 return null
             }
 
             if (!data) {
-                log('✅ No active session found')
+                log.debug('✅ No active session found')
                 return null
             }
 
-            log('✅ Active session found:', data)
-            log(`📊 Session started at: ${data.start_at}`)
+            log.info('✅ Active session found:', data.id)
+            log.debug(`📊 Session started at: ${data.start_at}`)
             return data
         } catch (error) {
-            logError('❌ Unexpected error in getActiveSession:', error)
+            log.error('❌ Unexpected error in getActiveSession:', error)
             return null
         }
     },
@@ -52,7 +39,7 @@ export const sessionService = {
     // Create a new session
     async createSession(startAt: Date = new Date()): Promise<Session | null> {
         const startAtISO = startAt.toISOString()
-        log(`🆕 Creating new session with start_at: ${startAtISO}`)
+        log.debug(`🆕 Creating new session with start_at: ${startAtISO}`)
 
         try {
             const { data, error } = await supabase
@@ -65,14 +52,14 @@ export const sessionService = {
                 .single()
 
             if (error) {
-                logError('❌ Error creating session:', error)
+                log.error('❌ Error creating session:', error)
                 return null
             }
 
-            log('✅ Session created successfully:', data)
+            log.info(`✅ Session created successfully: ${data.id}`)
             return data
         } catch (error) {
-            logError('❌ Unexpected error in createSession:', error)
+            log.error('❌ Unexpected error in createSession:', error)
             return null
         }
     },
@@ -80,7 +67,7 @@ export const sessionService = {
     // Stop an active session
     async stopSession(sessionId: string, endAt: Date = new Date()): Promise<Session | null> {
         const endAtISO = endAt.toISOString()
-        log(`⏹️ Stopping session ${sessionId} at: ${endAtISO}`)
+        log.debug(`⏹️ Stopping session ${sessionId} at: ${endAtISO}`)
 
         try {
             const { data, error } = await supabase
@@ -94,17 +81,39 @@ export const sessionService = {
                 .single()
 
             if (error) {
-                logError('❌ Error stopping session:', error)
+                log.error('❌ Error stopping session:', error)
                 return null
             }
 
-            log('✅ Session stopped successfully:', data)
             const elapsed = sessionService.getElapsedSeconds(data.start_at)
-            log(`📊 Session duration: ${formatDuration(elapsed)}`)
+            log.info(`✅ Session stopped successfully: ${sessionId} (duration: ${formatDuration(elapsed)})`)
             return data
         } catch (error) {
-            logError('❌ Unexpected error in stopSession:', error)
+            log.error('❌ Unexpected error in stopSession:', error)
             return null
+        }
+    },
+
+    // Delete a session
+    async deleteSession(sessionId: string): Promise<boolean> {
+        log.debug(`🗑️ Deleting session ${sessionId}...`)
+
+        try {
+            const { error } = await supabase
+                .from('sessions')
+                .delete()
+                .eq('id', sessionId)
+
+            if (error) {
+                log.error('❌ Error deleting session:', error)
+                return false
+            }
+
+            log.info(`✅ Session deleted successfully: ${sessionId}`)
+            return true
+        } catch (error) {
+            log.error('❌ Unexpected error in deleteSession:', error)
+            return false
         }
     },
 

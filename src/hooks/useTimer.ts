@@ -1,22 +1,9 @@
-import { supabase } from '@/lib/supabase'
 import { useState, useEffect, useRef } from 'react'
 import { sessionService } from '@/lib/sessionService'
 import type { Session } from '@/lib/supabase'
+import { createLogger } from '@/lib/logger'
 
-// Enable/disable debug logs
-const DEBUG = true
-
-function log(...args: any[]) {
-    if (DEBUG) {
-        console.log('[useTimer]', ...args)
-    }
-}
-
-function logError(...args: any[]) {
-    if (DEBUG) {
-        console.error('[useTimer Error]', ...args)
-    }
-}
+const log = createLogger('useTimer')
 
 interface UseTimerReturn {
     time: number
@@ -53,40 +40,40 @@ export function useTimer(): UseTimerReturn {
     // Load active session on mount
     useEffect(() => {
         if (hasLoadedRef.current) {
-            log('⏭️ Skipping duplicate load (already loaded)')
+            log.debug('⏭️ Skipping duplicate load (already loaded)')
             return
         }
         hasLoadedRef.current = true
 
         const loadActiveSession = async () => {
-            log('🚀 App loaded - checking for active session...')
+            log.debug('🚀 App loaded - checking for active session...')
             setIsLoading(true)
 
             const session = await sessionService.getActiveSession()
 
             if (session) {
-                log('✅ Active session found on load!')
+                log.info('✅ Active session found on load!')
                 setActiveSession(session)
                 const elapsed = sessionService.getElapsedSeconds(session.start_at)
-                log(`⏱️ Setting initial time to: ${formatTime(elapsed)} (${elapsed} seconds)`)
+                log.debug(`⏱️ Setting initial time to: ${formatTime(elapsed)} (${elapsed} seconds)`)
                 setTime(elapsed)
                 setIsRunning(true)
-                log('▶️ Starting timer from loaded session')
+                log.debug('▶️ Starting timer from loaded session')
                 startTimer()
             } else {
-                log('ℹ️ No active session found on load - ready to start')
+                log.debug('ℹ️ No active session found on load - ready to start')
                 setTime(0)
                 setIsRunning(false)
             }
 
             setIsLoading(false)
-            log('✅ Initialization complete')
+            log.debug('✅ Initialization complete')
         }
 
         loadActiveSession()
 
         return () => {
-            log('🧹 Cleaning up timer intervals')
+            log.debug('🧹 Cleaning up timer intervals')
             if (intervalRef.current) clearInterval(intervalRef.current)
             if (syncIntervalRef.current) clearInterval(syncIntervalRef.current)
         }
@@ -94,13 +81,13 @@ export function useTimer(): UseTimerReturn {
 
     // Start the timer interval
     const startTimer = () => {
-        log('▶️ Starting timer interval')
+        log.debug('▶️ Starting timer interval')
         if (intervalRef.current) clearInterval(intervalRef.current)
         intervalRef.current = window.setInterval(() => {
             setTime(prev => {
                 const newTime = prev + 1
                 if (newTime % 30 === 0) {
-                    log(`⏱️ Timer tick: ${formatTime(newTime)}`)
+                    log.debug(`⏱️ Timer tick: ${formatTime(newTime)}`)
                 }
                 return newTime
             })
@@ -110,7 +97,7 @@ export function useTimer(): UseTimerReturn {
     // Sync timer with database every 10 seconds when running
     useEffect(() => {
         if (isRunning && activeSession) {
-            log('🔄 Starting sync interval (every 10 seconds)')
+            log.debug('🔄 Starting sync interval (every 10 seconds)')
             syncIntervalRef.current = window.setInterval(() => {
                 if (activeSession) {
                     const elapsed = sessionService.getElapsedSeconds(activeSession.start_at)
@@ -118,15 +105,15 @@ export function useTimer(): UseTimerReturn {
                     const diff = Math.abs(elapsed - currentTime)
 
                     if (diff > 5) {
-                        log(`⚠️ Time drift detected: UI=${formatTime(currentTime)}, DB=${formatTime(elapsed)}, diff=${diff}s`)
-                        log(`🔄 Syncing timer with database...`)
+                        log.warn(`⚠️ Time drift detected: UI=${formatTime(currentTime)}, DB=${formatTime(elapsed)}, diff=${diff}s`)
+                        log.debug(`🔄 Syncing timer with database...`)
                         setTime(elapsed)
                     }
                 }
             }, 10000)
         } else {
             if (syncIntervalRef.current) {
-                log('⏹️ Stopping sync interval')
+                log.debug('⏹️ Stopping sync interval')
                 clearInterval(syncIntervalRef.current)
                 syncIntervalRef.current = null
             }
@@ -140,106 +127,82 @@ export function useTimer(): UseTimerReturn {
         }
     }, [isRunning, activeSession, time])
 
-    // Delete a session from database
-    const deleteSession = async (sessionId: string): Promise<boolean> => {
-        log(`🗑️ Deleting session ${sessionId}...`)
-
-        try {
-            const { error } = await supabase
-                .from('sessions')
-                .delete()
-                .eq('id', sessionId)
-
-            if (error) {
-                logError('❌ Error deleting session:', error)
-                return false
-            }
-
-            log('✅ Session deleted successfully')
-            return true
-        } catch (error) {
-            logError('❌ Unexpected error in deleteSession:', error)
-            return false
-        }
-    }
-
     // Start the timer
     const start = async () => {
-        log('🎯 Start button clicked')
+        log.info('🎯 Start button clicked')
 
         if (isRunning) {
-            log('⚠️ Timer already running - ignoring start')
+            log.warn('⚠️ Timer already running - ignoring start')
             return
         }
 
         try {
-            log('📝 Creating new session in database...')
+            log.debug('📝 Creating new session in database...')
             const session = await sessionService.createSession()
 
             if (!session) {
-                logError('❌ Failed to create session - start aborted')
+                log.error('❌ Failed to create session - start aborted')
                 return
             }
 
-            log('✅ Session created successfully with ID:', session.id)
+            log.info(`✅ Session created successfully with ID: ${session.id}`)
             setActiveSession(session)
             setTime(0)
             setIsRunning(true)
-            log('▶️ Timer started from 0')
+            log.debug('▶️ Timer started from 0')
             startTimer()
         } catch (error) {
-            logError('❌ Error starting timer:', error)
+            log.error('❌ Error starting timer:', error)
         }
     }
 
     // Stop the timer
     const stop = async () => {
-        log('⏹️ Stop button clicked')
+        log.info('⏹️ Stop button clicked')
 
         if (!isRunning) {
-            log('⚠️ Timer not running - ignoring stop')
+            log.warn('⚠️ Timer not running - ignoring stop')
             return
         }
 
         if (!activeSession) {
-            logError('❌ No active session to stop')
+            log.error('❌ No active session to stop')
             return
         }
 
         try {
-            log(`📝 Stopping session ${activeSession.id}...`)
+            log.debug(`📝 Stopping session ${activeSession.id}...`)
             const stoppedSession = await sessionService.stopSession(activeSession.id)
 
             if (stoppedSession) {
-                log('✅ Session stopped successfully')
+                log.info('✅ Session stopped successfully')
                 setActiveSession(stoppedSession)
             } else {
-                logError('❌ Failed to stop session')
+                log.error('❌ Failed to stop session')
             }
 
             setIsRunning(false)
             if (intervalRef.current) {
-                log('⏹️ Clearing timer interval')
+                log.debug('⏹️ Clearing timer interval')
                 clearInterval(intervalRef.current)
                 intervalRef.current = null
             }
 
-            // NEW: Auto reset after stop
-            log('🔄 Auto-resetting UI after stop')
+            log.debug('🔄 Auto-resetting UI after stop')
             setTime(0)
             setActiveSession(null)
 
         } catch (error) {
-            logError('❌ Error stopping timer:', error)
+            log.error('❌ Error stopping timer:', error)
         }
     }
 
-    // Reset the timer - Delete active session from database
+    // Reset the timer
     const reset = async () => {
-        log('🔄 Reset button clicked')
+        log.info('🔄 Reset button clicked')
 
         if (isRunning) {
-            log('⏹️ Stopping running timer before reset')
+            log.debug('⏹️ Stopping running timer before reset')
             setIsRunning(false)
             if (intervalRef.current) {
                 clearInterval(intervalRef.current)
@@ -247,14 +210,13 @@ export function useTimer(): UseTimerReturn {
             }
         }
 
-        // Delete the active session from database
         if (activeSession) {
-            await deleteSession(activeSession.id)
+            await sessionService.deleteSession(activeSession.id)
             setActiveSession(null)
         }
 
         setTime(0)
-        log('🔄 Timer reset to 0, session deleted from database')
+        log.info('🔄 Timer reset to 0, session deleted from database')
     }
 
     return {
