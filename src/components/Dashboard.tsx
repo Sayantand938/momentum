@@ -4,10 +4,11 @@ import { LayoutDashboard, Loader2 } from 'lucide-react'
 import { StatsSection } from './dashboard/StatsSection'
 import { WeeklyProgress } from './dashboard/WeeklyProgress'
 import { WeeklyRecords } from './dashboard/WeeklyRecords'
+import { HourlyDistribution } from './dashboard/HourlyDistribution'
 import { useDashboardStats } from './dashboard/useDashboardStats'
 
 function DashboardContent() {
-    const { loading, todayStats, weekStats, monthStats, weekSessions, monthSessions, formatTime } = useDashboardStats()
+    const { loading, todayStats, weekStats, monthStats, weekSessions, monthSessions, todaySessions, formatTime } = useDashboardStats()
 
     if (loading) {
         return (
@@ -33,6 +34,13 @@ function DashboardContent() {
                 stats={todayStats}
                 formatTime={formatTime}
             />
+
+            {/* Hourly Distribution - Today */}
+            {todaySessions && todaySessions.length > 0 && (
+                <div className="mt-4">
+                    <HourlyDistribution sessions={todaySessions} />
+                </div>
+            )}
 
             {/* This Week Section */}
             <div className="mt-8">

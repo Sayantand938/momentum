@@ -12,6 +12,7 @@ export function useDashboardStats() {
     const [todayStats, setTodayStats] = useState<Stats | null>(null)
     const [weekStats, setWeekStats] = useState<Stats | null>(null)
     const [monthStats, setMonthStats] = useState<Stats | null>(null)
+    const [todaySessions, setTodaySessions] = useState<Session[]>([]) // 👈 Added
     const [weekSessions, setWeekSessions] = useState<Session[]>([])
     const [monthSessions, setMonthSessions] = useState<Session[]>([])
 
@@ -60,6 +61,7 @@ export function useDashboardStats() {
             isWithinInterval(parseISO(s.start_at), { start: monthStart, end: monthEnd })
         )
 
+        setTodaySessions(todaySessions) // 👈 Store today sessions
         setWeekSessions(weekSessions)
         setMonthSessions(monthSessions)
         setTodayStats(calculateStatsForSessions(todaySessions))
@@ -72,6 +74,7 @@ export function useDashboardStats() {
         todayStats,
         weekStats,
         monthStats,
+        todaySessions, // 👈 Expose today sessions
         weekSessions,
         monthSessions,
         formatTime: formatStatsTime
