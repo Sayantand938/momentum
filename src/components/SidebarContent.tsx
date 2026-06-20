@@ -93,15 +93,6 @@ export function SidebarContent({ onClose }: SidebarContentProps) {
                     )
                 })}
             </nav>
-
-            {/* Footer */}
-            <div className="border-t border-border/40 p-4">
-                <div className="rounded-lg bg-muted/30 px-4 py-3">
-                    <p className="text-xs text-muted-foreground">
-                        ⚡ Today's focus: 2h 34m
-                    </p>
-                </div>
-            </div>
         </>
     )
 }
