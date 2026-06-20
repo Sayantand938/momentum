@@ -29,14 +29,8 @@ function TimerContent() {
     if (isLoading) {
         log.debug('⏳ Showing loading state...')
         return (
-            <div className="flex flex-col items-center gap-8">
-                <div className="text-7xl font-bold tracking-wider font-mono tabular-nums opacity-50">
-                    00:00
-                </div>
-                <div className="flex items-center gap-2 text-muted-foreground">
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                    Loading session...
-                </div>
+            <div className="flex items-center justify-center min-h-[calc(100vh-8rem)]">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
         )
     }
