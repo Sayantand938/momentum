@@ -7,8 +7,8 @@ export const Route = createRootRoute({
     component: () => (
         <div className="min-h-svh">
             <Header />
-            <main className="pt-16">
-                <div className="flex min-h-[calc(100vh-4rem)] flex-col items-center justify-center p-4">
+            <main className="pt-14">
+                <div className="flex flex-col items-center justify-start p-4">
                     <ErrorBoundary fallback={<RouteErrorBoundary error={new Error('Route failed to load')} reset={() => { }} />}>
                         <Outlet />
                     </ErrorBoundary>
