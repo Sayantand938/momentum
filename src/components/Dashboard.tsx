@@ -21,20 +21,17 @@ function DashboardContent() {
 
     return (
         <div className="container max-w-6xl mx-auto p-4 pt-2">
-            {/* Header */}
             <div className="flex items-center gap-3 mb-6">
                 <LayoutDashboard className="h-8 w-8 text-primary" />
                 <h1 className="text-2xl font-bold">Dashboard</h1>
             </div>
 
-            {/* Today Section */}
             <StatsSection
                 title="Today"
                 stats={todayStats}
                 formatTime={formatTime}
             />
 
-            {/* This Week Section */}
             <div className="mt-8">
                 <StatsSection
                     title="This Week"
@@ -42,7 +39,6 @@ function DashboardContent() {
                     formatTime={formatTime}
                 />
 
-                {/* Weekly Progress - Inside This Week */}
                 {weekSessions && weekSessions.length > 0 && (
                     <div className="mt-4">
                         <WeeklyProgress sessions={weekSessions} />
@@ -50,7 +46,6 @@ function DashboardContent() {
                 )}
             </div>
 
-            {/* This Month Section */}
             <div className="mt-8">
                 <StatsSection
                     title="This Month"
@@ -58,7 +53,6 @@ function DashboardContent() {
                     formatTime={formatTime}
                 />
 
-                {/* Weekly Records - Inside This Month */}
                 {monthSessions && monthSessions.length > 0 && (
                     <div className="mt-4">
                         <WeeklyRecords sessions={monthSessions} />
@@ -66,7 +60,6 @@ function DashboardContent() {
                 )}
             </div>
 
-            {/* No Data Message */}
             {!hasData && (
                 <Card>
                     <CardContent className="py-12 text-center text-muted-foreground">
@@ -79,7 +72,6 @@ function DashboardContent() {
     )
 }
 
-// Main Dashboard export with error boundary
 export default function Dashboard() {
     return (
         <ErrorBoundarySmall

@@ -3,13 +3,14 @@ import { useState, useEffect, useRef } from 'react'
 import { sessionService } from '@/lib/sessionService'
 import type { Session } from '@/lib/supabase'
 import { createLogger } from '@/lib/logger'
+import { formatTimerDisplay, getElapsedSeconds } from '@/lib/utils'
 
 const log = createLogger('useTimer')
 
 interface UseTimerReturn {
     time: number
     isRunning: boolean
-    isStarting: boolean // 👈 ADD THIS
+    isStarting: boolean
     activeSession: Session | null
     start: () => Promise<void>
     stop: () => Promise<void>
@@ -21,24 +22,12 @@ interface UseTimerReturn {
 export function useTimer(): UseTimerReturn {
     const [time, setTime] = useState(0)
     const [isRunning, setIsRunning] = useState(false)
-    const [isStarting, setIsStarting] = useState(false) // 👈 ADD THIS
+    const [isStarting, setIsStarting] = useState(false)
     const [activeSession, setActiveSession] = useState<Session | null>(null)
     const [isLoading, setIsLoading] = useState(true)
     const intervalRef = useRef<number | null>(null)
     const syncIntervalRef = useRef<number | null>(null)
     const hasLoadedRef = useRef(false)
-
-    // Format time as MM:SS or HH:MM:SS
-    const formatTime = (totalSeconds: number): string => {
-        const hours = Math.floor(totalSeconds / 3600)
-        const minutes = Math.floor((totalSeconds % 3600) / 60)
-        const seconds = totalSeconds % 60
-
-        if (hours > 0) {
-            return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
-        }
-        return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
-    }
 
     // Load active session on mount
     useEffect(() => {
@@ -57,8 +46,8 @@ export function useTimer(): UseTimerReturn {
             if (session) {
                 log.info('✅ Active session found on load!')
                 setActiveSession(session)
-                const elapsed = sessionService.getElapsedSeconds(session.start_at)
-                log.debug(`⏱️ Setting initial time to: ${formatTime(elapsed)} (${elapsed} seconds)`)
+                const elapsed = getElapsedSeconds(session.start_at)
+                log.debug(`⏱️ Setting initial time to: ${formatTimerDisplay(elapsed)} (${elapsed} seconds)`)
                 setTime(elapsed)
                 setIsRunning(true)
                 log.debug('▶️ Starting timer from loaded session')
@@ -90,7 +79,7 @@ export function useTimer(): UseTimerReturn {
             setTime(prev => {
                 const newTime = prev + 1
                 if (newTime % 30 === 0) {
-                    log.debug(`⏱️ Timer tick: ${formatTime(newTime)}`)
+                    log.debug(`⏱️ Timer tick: ${formatTimerDisplay(newTime)}`)
                 }
                 return newTime
             })
@@ -103,12 +92,12 @@ export function useTimer(): UseTimerReturn {
             log.debug('🔄 Starting sync interval (every 10 seconds)')
             syncIntervalRef.current = window.setInterval(() => {
                 if (activeSession) {
-                    const elapsed = sessionService.getElapsedSeconds(activeSession.start_at)
+                    const elapsed = getElapsedSeconds(activeSession.start_at)
                     const currentTime = time
                     const diff = Math.abs(elapsed - currentTime)
 
                     if (diff > 5) {
-                        log.warn(`⚠️ Time drift detected: UI=${formatTime(currentTime)}, DB=${formatTime(elapsed)}, diff=${diff}s`)
+                        log.warn(`⚠️ Time drift detected: UI=${formatTimerDisplay(currentTime)}, DB=${formatTimerDisplay(elapsed)}, diff=${diff}s`)
                         log.debug(`🔄 Syncing timer with database...`)
                         setTime(elapsed)
                     }
@@ -130,11 +119,10 @@ export function useTimer(): UseTimerReturn {
         }
     }, [isRunning, activeSession, time])
 
-    // 👇 UPDATED: Start the timer with loading state
+    // Start the timer
     const start = async () => {
         log.info('🎯 Start button clicked')
 
-        // Check if already running or starting
         if (isRunning) {
             log.warn('⚠️ Timer already running - ignoring start')
             return
@@ -145,7 +133,7 @@ export function useTimer(): UseTimerReturn {
             return
         }
 
-        setIsStarting(true) // 👈 Show loading state
+        setIsStarting(true)
 
         try {
             log.debug('📝 Creating new session in database...')
@@ -159,22 +147,21 @@ export function useTimer(): UseTimerReturn {
 
             log.info(`✅ Session created successfully with ID: ${session.id}`)
 
-            // 🔥 FIX: Calculate actual elapsed time from database timestamp
             const startTime = new Date(session.start_at).getTime()
             const now = Date.now()
             const initialElapsed = Math.floor((now - startTime) / 1000)
 
             setActiveSession(session)
-            setTime(initialElapsed) // Use actual elapsed time
+            setTime(initialElapsed)
             setIsRunning(true)
-            log.debug(`▶️ Timer started from ${formatTime(initialElapsed)}`)
+            log.debug(`▶️ Timer started from ${formatTimerDisplay(initialElapsed)}`)
             startTimer()
 
-            setIsStarting(false) // 👈 Clear loading state
+            setIsStarting(false)
 
         } catch (error) {
             log.error('❌ Error starting timer:', error)
-            setIsStarting(false) // 👈 Clear loading state on error
+            setIsStarting(false)
         }
     }
 
@@ -244,12 +231,12 @@ export function useTimer(): UseTimerReturn {
     return {
         time,
         isRunning,
-        isStarting, // 👈 EXPOSE THIS
+        isStarting,
         activeSession,
         start,
         stop,
         reset,
-        formatTime,
+        formatTime: formatTimerDisplay,
         isLoading,
     }
 }

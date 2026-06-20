@@ -1,7 +1,8 @@
-import { format, parseISO, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachWeekOfInterval, isWithinInterval } from 'date-fns'
+import { format, parseISO, startOfMonth, endOfMonth, endOfWeek, eachWeekOfInterval, isWithinInterval } from 'date-fns'
 import type { Session } from '@/lib/supabase'
 import { sessionService } from '@/lib/sessionService'
 import { ProgressTable } from './ProgressTable'
+import { formatCompactTime } from '@/lib/utils'
 
 interface WeeklyRecordsProps {
     sessions: Session[]

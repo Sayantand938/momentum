@@ -3,6 +3,7 @@ import { supabase, type Session } from '@/lib/supabase'
 import { sessionService } from '@/lib/sessionService'
 import { createLogger } from '@/lib/logger'
 import { parseISO, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns'
+import { formatStatsTime } from '@/lib/utils'
 
 const log = createLogger('useDashboardStats')
 
@@ -20,7 +21,7 @@ export function useDashboardStats() {
     const [weekStats, setWeekStats] = useState<Stats | null>(null)
     const [monthStats, setMonthStats] = useState<Stats | null>(null)
     const [weekSessions, setWeekSessions] = useState<Session[]>([])
-    const [monthSessions, setMonthSessions] = useState<Session[]>([]) // 👈 Added this
+    const [monthSessions, setMonthSessions] = useState<Session[]>([])
 
     useEffect(() => {
         fetchSessions()
@@ -68,7 +69,7 @@ export function useDashboardStats() {
         )
 
         setWeekSessions(weekSessions)
-        setMonthSessions(monthSessions) // 👈 Store month sessions
+        setMonthSessions(monthSessions)
         setTodayStats(calculateStatsForSessions(todaySessions))
         setWeekStats(calculateStatsForSessions(weekSessions))
         setMonthStats(calculateStatsForSessions(monthSessions))
@@ -135,20 +136,13 @@ export function useDashboardStats() {
         }
     }
 
-    const formatTime = (seconds: number): string => {
-        if (seconds === 0) return '0s'
-        const hours = Math.floor(seconds / 3600)
-        const minutes = Math.floor((seconds % 3600) / 60)
-        const remainingSeconds = seconds % 60
-
-        if (hours > 0) {
-            return `${hours}h ${minutes}m`
-        }
-        if (minutes > 0) {
-            return `${minutes}m ${remainingSeconds}s`
-        }
-        return `${remainingSeconds}s`
+    return {
+        loading,
+        todayStats,
+        weekStats,
+        monthStats,
+        weekSessions,
+        monthSessions,
+        formatTime: formatStatsTime
     }
-
-    return { loading, todayStats, weekStats, monthStats, weekSessions, monthSessions, formatTime }
 }

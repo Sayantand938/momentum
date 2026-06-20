@@ -1,19 +1,19 @@
 import { Card, CardContent } from '@/components/ui/card'
-import { format } from 'date-fns'
+import { formatCompactTime } from '@/lib/utils'
 
 interface ProgressItem {
     id: string | number
-    label: string          // Day name or Week number
-    subLabel: string       // Date or date range
+    label: string
+    subLabel: string
     totalSeconds: number
-    isHighlighted: boolean // Today or current week
+    isHighlighted: boolean
 }
 
 interface ProgressTableProps {
-    title: string           // "Weekly Progress" or "Monthly Progress"
+    title: string
     items: ProgressItem[]
     totalSeconds: number
-    goalSeconds: number     // 8h for daily, 56h for weekly
+    goalSeconds: number
 }
 
 export function ProgressTable({
@@ -35,23 +35,12 @@ export function ProgressTable({
         return 'bg-gray-200 dark:bg-gray-700'
     }
 
-    const formatTime = (seconds: number): string => {
-        const hours = Math.floor(seconds / 3600)
-        const minutes = Math.floor((seconds % 3600) / 60)
-
-        if (hours === 0 && minutes === 0) return '0h 0m'
-        if (hours === 0) return `${minutes}m`
-        if (minutes === 0) return `${hours}h`
-        return `${hours}h ${minutes}m`
-    }
-
     const totalHours = Math.floor(totalSeconds / 3600)
     const totalMinutes = Math.floor((totalSeconds % 3600) / 60)
     const totalTimeStr = totalHours > 0 ? `${totalHours}h ${totalMinutes}m` : `${totalMinutes}m`
 
     return (
         <Card>
-            {/* Header */}
             <div className="flex items-center justify-between px-4 pt-4 pb-2">
                 <h4 className="text-sm font-medium">{title}</h4>
                 <span className="text-sm text-muted-foreground">
@@ -59,7 +48,6 @@ export function ProgressTable({
                 </span>
             </div>
 
-            {/* Table */}
             <CardContent className="p-0 overflow-x-auto">
                 <table className="w-full">
                     <thead>
@@ -76,7 +64,7 @@ export function ProgressTable({
                         {items.map((item) => {
                             const percentage = getProgressPercentage(item.totalSeconds)
                             const barColor = getBarColor(percentage)
-                            const timeStr = formatTime(item.totalSeconds)
+                            const timeStr = formatCompactTime(item.totalSeconds)
 
                             return (
                                 <tr
@@ -86,7 +74,6 @@ export function ProgressTable({
                                         item.isHighlighted ? "bg-muted/10" : ""
                                     )}
                                 >
-                                    {/* Label Column */}
                                     <td className="px-4 py-2.5">
                                         <div className="flex flex-col">
                                             <span className={cn(
@@ -101,7 +88,6 @@ export function ProgressTable({
                                         </div>
                                     </td>
 
-                                    {/* Progress Bar Column with Time */}
                                     <td className="px-4 py-2.5">
                                         <div className="flex items-center gap-3">
                                             <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
@@ -125,7 +111,6 @@ export function ProgressTable({
     )
 }
 
-// Helper function
 function cn(...classes: (string | boolean | undefined)[]) {
     return classes.filter(Boolean).join(' ')
 }

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { supabase, type Session } from '@/lib/supabase'
 import { createLogger } from '@/lib/logger'
 import { format, parseISO, isSameDay } from 'date-fns'
+import { formatShortDate, formatTimeString, getDurationSeconds, formatDuration } from '@/lib/utils'
 
 const log = createLogger('useHistory')
 
@@ -49,8 +50,8 @@ export function useHistory() {
             if (!isSameDate) return false
 
             if (searchTerm) {
-                const dateStr = format(sessionDate, 'MMM d, yyyy')
-                const duration = formatDuration(session.start_at, session.end_at!)
+                const dateStr = formatShortDate(session.start_at)
+                const duration = formatDuration(getDurationSeconds(session.start_at, session.end_at!))
                 const searchLower = searchTerm.toLowerCase()
                 return dateStr.toLowerCase().includes(searchLower) ||
                     duration.toLowerCase().includes(searchLower)
@@ -60,32 +61,6 @@ export function useHistory() {
         })
 
         setFilteredSessions(filtered)
-    }
-
-    const formatDate = (timestamp: string) => {
-        return format(parseISO(timestamp), 'MMM d, yyyy')
-    }
-
-    const formatTime = (timestamp: string) => {
-        return format(parseISO(timestamp), 'h:mm a')
-    }
-
-    const formatDuration = (startAt: string, endAt: string) => {
-        const start = parseISO(startAt).getTime()
-        const end = parseISO(endAt).getTime()
-        const seconds = Math.floor((end - start) / 1000)
-
-        const hours = Math.floor(seconds / 3600)
-        const minutes = Math.floor((seconds % 3600) / 60)
-        const remainingSeconds = seconds % 60
-
-        if (hours > 0) {
-            return `${hours}h ${minutes}m ${remainingSeconds}s`
-        }
-        if (minutes > 0) {
-            return `${minutes}m ${remainingSeconds}s`
-        }
-        return `${remainingSeconds}s`
     }
 
     const handleDateSelect = (date: Date | undefined) => {
@@ -109,8 +84,11 @@ export function useHistory() {
         setIsCalendarOpen,
         handleDateSelect,
         clearSearch,
-        formatDate,
-        formatTime,
-        formatDuration,
+        formatDate: formatShortDate,
+        formatTime: formatTimeString,
+        formatDuration: (startAt: string, endAt: string) => {
+            const seconds = getDurationSeconds(startAt, endAt)
+            return formatDuration(seconds)
+        },
     }
 }

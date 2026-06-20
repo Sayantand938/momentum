@@ -2,6 +2,7 @@ import { format, parseISO, startOfWeek, endOfWeek, eachDayOfInterval, isWithinIn
 import type { Session } from '@/lib/supabase'
 import { sessionService } from '@/lib/sessionService'
 import { ProgressTable } from './ProgressTable'
+import { formatCompactTime } from '@/lib/utils'
 
 interface WeeklyProgressProps {
     sessions: Session[]

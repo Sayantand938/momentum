@@ -1,5 +1,5 @@
 import { type Session } from '@/lib/supabase'
-import { Clock } from 'lucide-react'  // 👈 Add this import
+import { Clock } from 'lucide-react'
 
 interface HistoryTableProps {
     sessions: Session[]
