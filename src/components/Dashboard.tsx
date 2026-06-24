@@ -2,8 +2,8 @@ import { ErrorBoundarySmall } from './ErrorBoundarySmall'
 import { Card, CardContent } from '@/components/ui/card'
 import { Spinner } from '@/components/ui/spinner'
 import { LayoutDashboard, Timer } from 'lucide-react'
-import { StatsSection } from './dashboard/StatsSection'
-import { useDashboardStats } from './dashboard/useDashboardStats'
+import { StatsGrid } from './dashboard/StatsGrid'  // Changed from StatsSection
+import { useDashboardStats } from '@/hooks/useDashboardStats'  // Changed path
 import { getShiftStats } from './dashboard/shiftUtils'
 import type { Session } from '@/lib/supabase'
 
@@ -27,7 +27,7 @@ function DashboardContent() {
 
     // Calculate Focus Score for Today (percentage of sessions that reached 30 minutes)
     const todayFocusScore = todaySessions && todaySessions.length > 0 ?
-        Math.round((todaySessions.filter(s => {
+        Math.round((todaySessions.filter((s: Session) => {
             const duration = Math.floor((new Date(s.end_at!).getTime() - new Date(s.start_at).getTime()) / 1000)
             return duration >= 1800
         }).length / todaySessions.length) * 100) : 0
@@ -89,7 +89,7 @@ function DashboardContent() {
             </div>
 
             {/* Today Section */}
-            <StatsSection
+            <StatsGrid
                 title="Today"
                 stats={todayStats}
                 formatTime={formatTime}
@@ -117,7 +117,7 @@ function DashboardContent() {
 
             {/* This Week Section */}
             <div className="mt-8">
-                <StatsSection
+                <StatsGrid
                     title="This Week"
                     stats={weekStats}
                     formatTime={formatTime}
@@ -146,7 +146,7 @@ function DashboardContent() {
 
             {/* This Month Section */}
             <div className="mt-8">
-                <StatsSection
+                <StatsGrid
                     title="This Month"
                     stats={monthStats}
                     formatTime={formatTime}
@@ -156,7 +156,7 @@ function DashboardContent() {
                         extra1: {
                             id: 'days-active',
                             title: 'Active Days',
-                            value: monthSessions ? new Set(monthSessions.map(s => new Date(s.start_at).toDateString())).size : 0,
+                            value: monthSessions ? new Set(monthSessions.map((s: Session) => new Date(s.start_at).toDateString())).size : 0,
                             icon: 'CalendarDays',
                             color: 'text-primary',
                             tooltip: 'Number of days with at least one session'

@@ -26,7 +26,7 @@ interface ExtraCard {
     tooltip: string
 }
 
-interface StatsSectionProps {
+interface StatsGridProps {
     title: string
     stats: Stats | null
     formatTime: (seconds: number) => string
@@ -42,7 +42,7 @@ interface StatsSectionProps {
     }
 }
 
-export function StatsSection({
+export function StatsGrid({
     title,
     stats,
     formatTime,
@@ -50,7 +50,7 @@ export function StatsSection({
     bonusTime,
     showBonus = false,
     extraCards
-}: StatsSectionProps) {
+}: StatsGridProps) {
     if (!stats) return null
 
     // If shiftStats is provided, use shift names instead of time slots

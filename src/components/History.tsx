@@ -14,7 +14,7 @@ import {
 import { format } from 'date-fns'
 import { HistoryTable } from './history/HistoryTable'
 import { NormalizedTableView } from './history/NormalizedTableView'
-import { useHistory } from './history/useHistory'
+import { useHistory } from '@/hooks/useHistory'  // Changed path
 import { DATE_FORMATS } from '@/constants'
 
 function HistoryContent() {

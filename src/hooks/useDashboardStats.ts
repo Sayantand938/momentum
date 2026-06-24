@@ -12,7 +12,7 @@ import {
     isWithinInterval
 } from 'date-fns'
 import { formatStatsTime } from '@/lib/utils'
-import { calculateStatsForSessions, type Stats } from './statsCalculator'
+import { calculateStatsForSessions, type Stats } from '@/components/dashboard/statsCalculator'  // Fixed path
 import { DEFAULTS } from '@/constants'
 
 const log = createLogger('useDashboardStats')

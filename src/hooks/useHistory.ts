@@ -16,7 +16,7 @@ import {
     formatStatsTime
 } from '@/lib/utils'
 import { DATE_FORMATS } from '@/constants'
-import { calculateHourlyDistributionWithTimeBank } from '@/lib/hourlyUtils'
+import { calculateHourlyDistributionWithTimeBank } from '@/lib/timeBank'  // Changed from hourlyUtils
 
 const log = createLogger('useHistory')
 
@@ -85,7 +85,7 @@ export function useHistory() {
             const result = calculateHourlyDistributionWithTimeBank(filteredSessions)
             const HOURS = Array.from({ length: 16 }, (_, i) => i + 8)
 
-            return result.hourlyData.map((slot, index) => {
+            return result.hourlyData.map((slot: { hour: number; totalSeconds: number; actualSeconds: number; bankUsed?: number; isOverflow?: boolean }, index: number) => {
                 const hour = HOURS[index]
                 return {
                     hour,
