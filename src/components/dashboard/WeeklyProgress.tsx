@@ -1,18 +1,24 @@
-import { format, parseISO, startOfWeek, endOfWeek, eachDayOfInterval, isWithinInterval } from 'date-fns'
+import {
+    format,
+    parseISO,
+    startOfWeek,
+    endOfWeek,
+    eachDayOfInterval,
+    isWithinInterval
+} from 'date-fns'
 import type { Session } from '@/lib/supabase'
-import { getDurationSeconds } from '@/lib/utils' // 👈 Changed import
+import { getDurationSeconds } from '@/lib/utils'
+import { TIME, DEFAULTS } from '@/constants'
 import { ProgressTable } from './ProgressTable'
 
 interface WeeklyProgressProps {
     sessions: Session[]
 }
 
-const DAILY_GOAL_SECONDS = 8 * 3600 // 8 hours
-
 export function WeeklyProgress({ sessions }: WeeklyProgressProps) {
     const now = new Date()
-    const weekStart = startOfWeek(now, { weekStartsOn: 1 })
-    const weekEnd = endOfWeek(now, { weekStartsOn: 1 })
+    const weekStart = startOfWeek(now, { weekStartsOn: DEFAULTS.WEEK_STARTS_ON })
+    const weekEnd = endOfWeek(now, { weekStartsOn: DEFAULTS.WEEK_STARTS_ON })
 
     const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd })
 
@@ -27,7 +33,6 @@ export function WeeklyProgress({ sessions }: WeeklyProgressProps) {
 
         let totalSeconds = 0
         daySessions.forEach(session => {
-            // 🔥 FIX: Calculate duration from start_at to end_at
             const duration = getDurationSeconds(session.start_at, session.end_at!)
             totalSeconds += duration
         })
@@ -48,7 +53,7 @@ export function WeeklyProgress({ sessions }: WeeklyProgressProps) {
             title="Weekly Progress"
             items={items}
             totalSeconds={totalWeekSeconds}
-            goalSeconds={DAILY_GOAL_SECONDS}
+            goalSeconds={TIME.DAILY_GOAL}
         />
     )
 }

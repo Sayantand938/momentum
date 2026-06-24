@@ -1,6 +1,7 @@
 import { ErrorBoundarySmall } from './ErrorBoundarySmall'
 import { Card, CardContent } from '@/components/ui/card'
-import { LayoutDashboard, Loader2 } from 'lucide-react'
+import { Spinner } from '@/components/ui/spinner'
+import { LayoutDashboard, Timer } from 'lucide-react'
 import { StatsSection } from './dashboard/StatsSection'
 import { WeeklyProgress } from './dashboard/WeeklyProgress'
 import { WeeklyRecords } from './dashboard/WeeklyRecords'
@@ -15,7 +16,7 @@ function DashboardContent() {
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-[calc(100vh-8rem)]">
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                <Spinner className="h-8 w-8 animate-spin" />
             </div>
         )
     }
@@ -27,7 +28,7 @@ function DashboardContent() {
     const weekShiftStats = weekSessions ? getShiftStats(weekSessions) : null
     const monthShiftStats = monthSessions ? getShiftStats(monthSessions) : null
 
-    // 👇 Calculate Focus Points for each period (each 30m+ session = 1 point)
+    // Calculate Focus Points for each period (each 30m+ session = 1 point)
     const todayFocusPoints = getFocusPoints(todaySessions)
     const weekFocusPoints = getFocusPoints(weekSessions)
     const monthFocusPoints = getFocusPoints(monthSessions)
@@ -93,8 +94,9 @@ function DashboardContent() {
             {/* No Data Message */}
             {!hasData && (
                 <Card>
-                    <CardContent className="py-12 text-center text-muted-foreground">
-                        <p>No session data available yet</p>
+                    <CardContent className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground">
+                        <Timer className="h-12 w-12 mb-4 text-muted-foreground/50" />
+                        <p className="text-lg font-medium text-foreground">No session data available yet</p>
                         <p className="text-sm mt-1">Start your first focus session to see statistics!</p>
                     </CardContent>
                 </Card>

@@ -3,9 +3,9 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Spinner } from '@/components/ui/spinner'
 import {
     History as HistoryIcon,
-    Loader2,
     Calendar as CalendarIcon,
     Search,
     X
@@ -13,6 +13,7 @@ import {
 import { format } from 'date-fns'
 import { HistoryTable } from './history/HistoryTable'
 import { useHistory } from './history/useHistory'
+import { DATE_FORMATS } from '@/constants'
 
 function HistoryContent() {
     const {
@@ -33,7 +34,7 @@ function HistoryContent() {
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-[calc(100vh-8rem)]">
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                <Spinner className="h-8 w-8 animate-spin" />
             </div>
         )
     }
@@ -87,8 +88,11 @@ function HistoryContent() {
             {/* Sessions Table */}
             {filteredSessions.length === 0 ? (
                 <Card>
-                    <CardContent className="py-12 text-center text-muted-foreground">
-                        <p>No sessions found for {format(selectedDate, 'MMM d, yyyy')}</p>
+                    <CardContent className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground">
+                        <HistoryIcon className="h-12 w-12 mb-4 text-muted-foreground/50" />
+                        <p className="text-lg font-medium text-foreground">
+                            No sessions found for {format(selectedDate, DATE_FORMATS.SHORT_DATE)}
+                        </p>
                         <p className="text-sm mt-1">Start a focus session to track your progress!</p>
                     </CardContent>
                 </Card>

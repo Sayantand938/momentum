@@ -1,22 +1,17 @@
 // src/components/dashboard/shiftUtils.ts
 import type { Session } from '@/lib/supabase'
 import { parseISO } from 'date-fns'
+import { SHIFTS } from '@/constants'
 
 export interface Shift {
     name: string
     hours: number[]
 }
 
-export const SHIFTS: Shift[] = [
-    { name: 'Morning', hours: [8, 9, 10, 11] },
-    { name: 'Afternoon', hours: [12, 13, 14, 15] },
-    { name: 'Evening', hours: [16, 17, 18, 19] },
-    { name: 'Night', hours: [20, 21, 22, 23] }
-]
-
 export function getShiftForHour(hour: number): string | null {
     for (const shift of SHIFTS) {
-        if (shift.hours.includes(hour)) {
+        // Use indexOf instead of includes to avoid type issues
+        if (shift.hours.indexOf(hour) !== -1) {
             return shift.name
         }
     }

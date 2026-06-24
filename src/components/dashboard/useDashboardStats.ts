@@ -1,9 +1,19 @@
 import { useState, useEffect } from 'react'
 import { supabase, type Session } from '@/lib/supabase'
 import { createLogger } from '@/lib/logger'
-import { parseISO, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns'
+import {
+    parseISO,
+    startOfDay,
+    endOfDay,
+    startOfWeek,
+    endOfWeek,
+    startOfMonth,
+    endOfMonth,
+    isWithinInterval
+} from 'date-fns'
 import { formatStatsTime } from '@/lib/utils'
 import { calculateStatsForSessions, type Stats } from './statsCalculator'
+import { DEFAULTS } from '@/constants'
 
 const log = createLogger('useDashboardStats')
 
@@ -51,8 +61,8 @@ export function useDashboardStats() {
 
         const todayStart = startOfDay(now)
         const todayEnd = endOfDay(now)
-        const weekStart = startOfWeek(now, { weekStartsOn: 1 })
-        const weekEnd = endOfWeek(now, { weekStartsOn: 1 })
+        const weekStart = startOfWeek(now, { weekStartsOn: DEFAULTS.WEEK_STARTS_ON })
+        const weekEnd = endOfWeek(now, { weekStartsOn: DEFAULTS.WEEK_STARTS_ON })
         const monthStart = startOfMonth(now)
         const monthEnd = endOfMonth(now)
 

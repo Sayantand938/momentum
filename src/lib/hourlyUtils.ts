@@ -2,8 +2,7 @@
 import type { Session } from './supabase'
 import { parseISO } from 'date-fns'
 import { getDurationSeconds } from './utils'
-
-export const HOURLY_GOAL_SECONDS = 30 * 60 // 30 minutes
+import { TIME } from '@/constants'
 
 export interface HourlyData {
     hour: number
@@ -46,10 +45,8 @@ export function calculateHourlyDistribution(sessions: Session[]): HourlyData[] {
  * Get Focus Points - each 30m+ single session = 1 point
  */
 export function getFocusPoints(sessions: Session[]): number {
-    const FOCUS_GOAL_SECONDS = 30 * 60 // 30 minutes
-
     return sessions.filter(session => {
         const duration = getDurationSeconds(session.start_at, session.end_at!)
-        return duration >= FOCUS_GOAL_SECONDS
+        return duration >= TIME.FOCUS_POINT_THRESHOLD
     }).length
 }

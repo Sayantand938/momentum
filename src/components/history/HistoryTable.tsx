@@ -1,3 +1,11 @@
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table'
 import { type Session } from '@/lib/supabase'
 
 interface HistoryTableProps {
@@ -9,55 +17,45 @@ interface HistoryTableProps {
 
 export function HistoryTable({ sessions, formatDate, formatTime, formatDuration }: HistoryTableProps) {
     return (
-        <div className="rounded-lg border border-border/40 overflow-x-auto custom-scrollbar">
-            <table className="w-full min-w-[500px]">
-                <thead>
-                    <tr className="border-b border-border/40 bg-muted/30">
-                        <th className="text-left text-xs font-medium text-muted-foreground uppercase tracking-wider px-4 py-3 w-16">
-                            #
-                        </th>
-                        <th className="text-left text-xs font-medium text-muted-foreground uppercase tracking-wider px-4 py-3">
-                            Date
-                        </th>
-                        <th className="text-left text-xs font-medium text-muted-foreground uppercase tracking-wider px-4 py-3">
-                            Start Time
-                        </th>
-                        <th className="text-left text-xs font-medium text-muted-foreground uppercase tracking-wider px-4 py-3">
-                            End Time
-                        </th>
-                        <th className="text-right text-xs font-medium text-muted-foreground uppercase tracking-wider px-4 py-3">
-                            Duration
-                        </th>
-                    </tr>
-                </thead>
-                <tbody>
+        <div className="rounded-lg border border-border/40 overflow-x-auto">
+            <Table>
+                <TableHeader>
+                    <TableRow className="border-b border-border/40 bg-muted/30">
+                        <TableHead className="w-16 text-center">#</TableHead>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Start Time</TableHead>
+                        <TableHead>End Time</TableHead>
+                        <TableHead className="text-right">Duration</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
                     {sessions.map((session, index) => (
-                        <tr
+                        <TableRow
                             key={session.id}
                             className={cn(
                                 "border-b border-border/20 last:border-0 hover:bg-muted/20 transition-colors",
                                 index % 2 === 0 ? "bg-background" : "bg-muted/5"
                             )}
                         >
-                            <td className="px-4 py-3 text-sm text-muted-foreground text-center">
+                            <TableCell className="text-center text-muted-foreground">
                                 {index + 1}
-                            </td>
-                            <td className="px-4 py-3 text-sm font-medium whitespace-nowrap">
+                            </TableCell>
+                            <TableCell className="font-medium whitespace-nowrap">
                                 {formatDate(session.start_at)}
-                            </td>
-                            <td className="px-4 py-3 text-sm whitespace-nowrap">
+                            </TableCell>
+                            <TableCell className="whitespace-nowrap">
                                 {formatTime(session.start_at)}
-                            </td>
-                            <td className="px-4 py-3 text-sm text-muted-foreground whitespace-nowrap">
+                            </TableCell>
+                            <TableCell className="text-muted-foreground whitespace-nowrap">
                                 {formatTime(session.end_at!)}
-                            </td>
-                            <td className="px-4 py-3 text-sm text-right font-medium text-foreground whitespace-nowrap">
+                            </TableCell>
+                            <TableCell className="text-right font-medium text-foreground whitespace-nowrap">
                                 {formatDuration(session.start_at, session.end_at!)}
-                            </td>
-                        </tr>
+                            </TableCell>
+                        </TableRow>
                     ))}
-                </tbody>
-            </table>
+                </TableBody>
+            </Table>
         </div>
     )
 }

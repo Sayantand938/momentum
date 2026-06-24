@@ -1,3 +1,9 @@
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from '@/components/ui/tooltip'
 import { StatsCard } from './StatsCard'
 
 interface Stats {
@@ -17,7 +23,7 @@ interface StatsSectionProps {
         mostProductive: { name: string; totalSeconds: number },
         leastProductive: { name: string; totalSeconds: number }
     } | null
-    focusPoints?: number // 👈 Changed from productiveSlots to focusPoints
+    focusPoints?: number
 }
 
 export function StatsSection({ title, stats, formatTime, showAvg = false, shiftStats, focusPoints }: StatsSectionProps) {
@@ -46,28 +52,36 @@ export function StatsSection({ title, stats, formatTime, showAvg = false, shiftS
             title: 'Total Time',
             value: formatTime(stats.totalTime),
             icon: 'Clock' as const,
-            color: 'text-primary'
+            color: 'text-primary',
+            tooltip: `Total time spent focusing`
         },
         {
-            id: 'focus-points', // 👈 Changed from 'power-slots'
-            title: 'Focus Points', // 👈 Changed from 'Power Slots'
+            id: 'focus-points',
+            title: 'Focus Points',
             value: focusPoints !== undefined ? focusPoints : stats.totalSessions,
             icon: 'Activity' as const,
-            color: 'text-primary'
+            color: 'text-primary',
+            tooltip: `Sessions ≥ 30 minutes = 1 point`
         },
         {
             id: 'most-productive',
             title: 'Most Productive',
             value: mostProductiveValue,
             icon: 'TrendingUp' as const,
-            color: 'text-green-500'
+            color: 'text-green-500',
+            tooltip: shiftStats
+                ? `Most productive shift: ${shiftStats.mostProductive.name}`
+                : `Most productive hour: ${stats.mostProductiveSlot}`
         },
         {
             id: 'least-productive',
             title: 'Least Productive',
             value: leastProductiveValue,
             icon: 'TrendingDown' as const,
-            color: 'text-red-500'
+            color: 'text-red-500',
+            tooltip: shiftStats
+                ? `Least productive shift: ${shiftStats.leastProductive.name}`
+                : `Least productive hour: ${stats.leastProductiveSlot}`
         }
     ]
 
@@ -77,7 +91,8 @@ export function StatsSection({ title, stats, formatTime, showAvg = false, shiftS
             title: 'Avg Session',
             value: formatTime(stats.avgSessionTime),
             icon: 'Clock' as const,
-            color: 'text-primary'
+            color: 'text-primary',
+            tooltip: `Average session duration`
         }
     }
 
@@ -86,13 +101,23 @@ export function StatsSection({ title, stats, formatTime, showAvg = false, shiftS
             <h2 className="text-lg font-semibold">{title}</h2>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 {statCards.map((card) => (
-                    <StatsCard
-                        key={card.id}
-                        title={card.title}
-                        value={card.value}
-                        icon={card.icon}
-                        color={card.color}
-                    />
+                    <TooltipProvider key={card.id}>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <div>
+                                    <StatsCard
+                                        title={card.title}
+                                        value={card.value}
+                                        icon={card.icon}
+                                        color={card.color}
+                                    />
+                                </div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>{card.tooltip}</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
                 ))}
             </div>
         </div>

@@ -1,5 +1,7 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
+import { format, formatDistanceToNow, formatRelative, parseISO } from 'date-fns'
+import { DATE_FORMATS } from '@/constants'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -85,46 +87,76 @@ export function formatTimerDisplay(seconds: number): string {
   return `${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`
 }
 
-// ============ DATE FORMATTING UTILITIES ============
+// ============ DATE FORMATTING UTILITIES (using date-fns) ============
 
 /**
  * Format a date string to a short date (e.g., "MMM d, yyyy")
  */
 export function formatShortDate(dateString: string): string {
-  return new Date(dateString).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric'
-  })
-}
-
-/**
- * Format a date string to a time string (e.g., "h:mm a")
- */
-export function formatTimeString(dateString: string): string {
-  return new Date(dateString).toLocaleTimeString('en-US', {
-    hour: '2-digit',
-    minute: '2-digit'
-  })
+  return format(parseISO(dateString), 'MMM d, yyyy')
 }
 
 /**
  * Format a date string to a compact date (e.g., "MMM d")
  */
 export function formatCompactDate(dateString: string): string {
-  return new Date(dateString).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric'
-  })
+  return format(parseISO(dateString), 'MMM d')
+}
+
+/**
+ * Format a date string to a time string (e.g., "h:mm a")
+ */
+export function formatTimeString(dateString: string): string {
+  return format(parseISO(dateString), 'h:mm a')
+}
+
+/**
+ * Format a date string to a full date (e.g., "EEEE, MMMM d, yyyy")
+ */
+export function formatFullDate(dateString: string): string {
+  return format(parseISO(dateString), 'EEEE, MMMM d, yyyy')
+}
+
+/**
+ * Format a date string to a date with weekday (e.g., "EEE, MMM d")
+ */
+export function formatDateWithWeekday(dateString: string): string {
+  return format(parseISO(dateString), 'EEE, MMM d')
 }
 
 /**
  * Get the day name from a date string (e.g., "Mon", "Tue")
  */
 export function getDayName(dateString: string): string {
-  return new Date(dateString).toLocaleDateString('en-US', {
-    weekday: 'short'
-  })
+  return format(parseISO(dateString), 'EEE')
+}
+
+/**
+ * Get the full day name from a date string (e.g., "Monday", "Tuesday")
+ */
+export function getFullDayName(dateString: string): string {
+  return format(parseISO(dateString), 'EEEE')
+}
+
+/**
+ * Format a date string to ISO date (e.g., "yyyy-MM-dd")
+ */
+export function formatISODate(dateString: string): string {
+  return format(parseISO(dateString), 'yyyy-MM-dd')
+}
+
+/**
+ * Format a date to a relative time (e.g., "2 hours ago")
+ */
+export function formatRelativeTime(dateString: string): string {
+  return formatDistanceToNow(parseISO(dateString), { addSuffix: true })
+}
+
+/**
+ * Format a date with a custom format string
+ */
+export function formatDate(dateString: string, formatStr: string): string {
+  return format(parseISO(dateString), formatStr)
 }
 
 /**
@@ -156,4 +188,12 @@ export function getElapsedSeconds(startAt: string): number {
   const start = new Date(startAt).getTime()
   const now = Date.now()
   return Math.floor((now - start) / 1000)
+}
+
+/**
+ * Format a date using date-fns with the provided format string
+ */
+export function formatDateString(date: Date | string, formatStr: string): string {
+  const dateObj = typeof date === 'string' ? parseISO(date) : date
+  return format(dateObj, formatStr)
 }

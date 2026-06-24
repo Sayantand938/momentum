@@ -1,4 +1,5 @@
 import { Timer, LayoutDashboard, History, Settings, type LucideIcon } from "lucide-react"
+import { ROUTES } from './index'
 
 export interface MenuItem {
     icon: LucideIcon
@@ -13,28 +14,28 @@ export const menuItems: MenuItem[] = [
         icon: Timer,
         label: "Timer",
         id: "timer",
-        path: "/",
+        path: ROUTES.HOME,
         description: "Focus & track time"
     },
     {
         icon: LayoutDashboard,
         label: "Dashboard",
         id: "dashboard",
-        path: "/dashboard",
+        path: ROUTES.DASHBOARD,
         description: "Overview of progress"
     },
     {
         icon: History,
         label: "History",
         id: "history",
-        path: "/history",
+        path: ROUTES.HISTORY,
         description: "Past sessions"
     },
     {
         icon: Settings,
         label: "Settings",
         id: "settings",
-        path: "/settings",
+        path: ROUTES.SETTINGS,
         description: "Customize your experience"
     },
 ]

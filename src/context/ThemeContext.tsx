@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState } from "react"
+import { STORAGE_KEYS, DEFAULTS } from '@/constants'
 
 type Theme = "dark" | "light"
 
@@ -12,14 +13,14 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const [theme, setTheme] = useState<Theme>(() => {
         // Check localStorage first
-        const stored = localStorage.getItem("theme") as Theme | null
+        const stored = localStorage.getItem(STORAGE_KEYS.THEME) as Theme | null
         if (stored) return stored
 
         // Then check system preference
         if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
             return "dark"
         }
-        return "light"
+        return DEFAULTS.THEME
     })
 
     useEffect(() => {
@@ -29,7 +30,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         } else {
             root.classList.remove("dark")
         }
-        localStorage.setItem("theme", theme)
+        localStorage.setItem(STORAGE_KEYS.THEME, theme)
     }, [theme])
 
     const toggleTheme = () => {

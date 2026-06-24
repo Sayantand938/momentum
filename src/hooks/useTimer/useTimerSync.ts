@@ -4,6 +4,7 @@ import { getElapsedSeconds } from '@/lib/utils'
 import { formatTimerDisplay } from '@/lib/utils'
 import { createLogger } from '@/lib/logger'
 import type { Session } from '@/lib/supabase'
+import { TIME } from '@/constants'
 
 const log = createLogger('useTimerSync')
 
@@ -37,7 +38,7 @@ export function useTimerSync({
                         setTime(elapsed)
                     }
                 }
-            }, 10000)
+            }, TIME.SYNC_INTERVAL)
         } else {
             if (syncIntervalRef.current) {
                 log.debug('⏹️ Stopping sync interval')

@@ -193,3 +193,97 @@ body.scroll-locked {
   position: fixed !important;
   width: 100% !important;
 }
+
+
+
+/* Add at the bottom of your index.css */
+
+/* ... your existing styles ... */
+
+/* ======================================== */
+/* SHADCN COMPONENT CUSTOMIZATIONS          */
+/* ======================================== */
+
+/* Progress bar colors based on completion */
+[data-complete="true"] [data-slot="progress-indicator"] {
+  background: oklch(0.2 0 0);
+}
+
+.dark [data-complete="true"] [data-slot="progress-indicator"] {
+  background: oklch(0.8 0 0);
+}
+
+/* Progress bar hover effect */
+[data-slot="progress"]:hover [data-slot="progress-indicator"] {
+  transition: transform 0.3s ease-in-out;
+}
+
+/* Tooltip custom styling */
+[data-slot="tooltip-content"] {
+  max-width: 220px;
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+/* Dialog custom animations */
+[data-slot="dialog-content"] {
+  animation-duration: 150ms;
+}
+
+/* Badge pulse animation for live indicator */
+@keyframes pulse-dot {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-pulse-dot {
+  animation: pulse-dot 1.5s ease-in-out infinite;
+}
+
+/* Scroll area custom styling */
+[data-slot="scroll-area"] {
+  --scrollbar-size: 6px;
+}
+
+[data-slot="scroll-area"] [data-slot="scroll-area-thumb"] {
+  background: var(--border);
+  border-radius: 3px;
+}
+
+[data-slot="scroll-area"] [data-slot="scroll-area-thumb"]:hover {
+  background: var(--muted-foreground);
+}
+
+/* Spinner accessibility */
+[data-slot="spinner"] {
+  color: var(--muted-foreground);
+}
+
+/* Table row hover effect */
+[data-slot="table-row"]:hover {
+  background-color: var(--muted);
+  transition: background-color 150ms ease;
+}
+
+/* Stats Card hover effect */
+[data-slot="card"]:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transition: box-shadow 200ms ease;
+}
+
+.dark [data-slot="card"]:hover {
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.05);
+}
+
+/* Empty state card styling */
+[data-slot="empty"] {
+  border-color: var(--border);
+  background: var(--background);
+}
