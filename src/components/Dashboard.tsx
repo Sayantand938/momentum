@@ -8,7 +8,7 @@ import { WeeklyRecords } from './dashboard/WeeklyRecords'
 import { HourlyDistribution } from './dashboard/HourlyDistribution'
 import { useDashboardStats } from './dashboard/useDashboardStats'
 import { getShiftStats } from './dashboard/shiftUtils'
-import { getFocusPoints } from '@/lib/hourlyUtils'
+import { getFocusPointsWithTimeBank, getRemainingBank } from '@/lib/hourlyUtils'
 
 function DashboardContent() {
     const { loading, todayStats, weekStats, monthStats, weekSessions, monthSessions, todaySessions, formatTime } = useDashboardStats()
@@ -28,10 +28,13 @@ function DashboardContent() {
     const weekShiftStats = weekSessions ? getShiftStats(weekSessions) : null
     const monthShiftStats = monthSessions ? getShiftStats(monthSessions) : null
 
-    // Calculate Focus Points for each period (each 30m+ session = 1 point)
-    const todayFocusPoints = getFocusPoints(todaySessions)
-    const weekFocusPoints = getFocusPoints(weekSessions)
-    const monthFocusPoints = getFocusPoints(monthSessions)
+    // Calculate Focus Points using Time Bank logic
+    const todayFocusPoints = todaySessions ? getFocusPointsWithTimeBank(todaySessions) : 0
+    const weekFocusPoints = weekSessions ? getFocusPointsWithTimeBank(weekSessions) : 0
+    const monthFocusPoints = monthSessions ? getFocusPointsWithTimeBank(monthSessions) : 0
+
+    // Get remaining bank (bonus time)
+    const todayBonus = todaySessions ? getRemainingBank(todaySessions) : 0
 
     return (
         <div className="container max-w-6xl mx-auto p-4 pt-2">
@@ -48,6 +51,7 @@ function DashboardContent() {
                 formatTime={formatTime}
                 shiftStats={todayShiftStats}
                 focusPoints={todayFocusPoints}
+                bonusTime={todayBonus}
             />
 
             {/* Hourly Distribution - Today */}

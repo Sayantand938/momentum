@@ -24,9 +24,10 @@ interface StatsSectionProps {
         leastProductive: { name: string; totalSeconds: number }
     } | null
     focusPoints?: number
+    bonusTime?: number
 }
 
-export function StatsSection({ title, stats, formatTime, showAvg = false, shiftStats, focusPoints }: StatsSectionProps) {
+export function StatsSection({ title, stats, formatTime, showAvg = false, shiftStats, focusPoints, bonusTime }: StatsSectionProps) {
     if (!stats) return null
 
     // If shiftStats is provided, use shift names instead of time slots
@@ -46,13 +47,18 @@ export function StatsSection({ title, stats, formatTime, showAvg = false, shiftS
         stats.leastProductiveSlot
     )
 
+    // Calculate total completed time (focus points × 30 minutes)
+    const totalCompletedTime = focusPoints !== undefined ? focusPoints * 30 * 60 : 0
+    const totalCompletedTimeStr = formatTime(totalCompletedTime)
+
+    // Define stat cards with proper typing
     const statCards = [
         {
             id: 'total-time',
             title: 'Total Time',
             value: formatTime(stats.totalTime),
             icon: 'Clock' as const,
-            color: 'text-primary',
+            color: 'text-primary' as const,
             tooltip: `Total time spent focusing`
         },
         {
@@ -60,15 +66,15 @@ export function StatsSection({ title, stats, formatTime, showAvg = false, shiftS
             title: 'Focus Points',
             value: focusPoints !== undefined ? focusPoints : stats.totalSessions,
             icon: 'Activity' as const,
-            color: 'text-primary',
-            tooltip: `Sessions ≥ 30 minutes = 1 point`
+            color: 'text-primary' as const,
+            tooltip: `${focusPoints || 0} hours completed × 30m = ${totalCompletedTimeStr}`
         },
         {
             id: 'most-productive',
             title: 'Most Productive',
             value: mostProductiveValue,
             icon: 'TrendingUp' as const,
-            color: 'text-green-500',
+            color: 'text-green-500' as const,
             tooltip: shiftStats
                 ? `Most productive shift: ${shiftStats.mostProductive.name}`
                 : `Most productive hour: ${stats.mostProductiveSlot}`
@@ -78,20 +84,33 @@ export function StatsSection({ title, stats, formatTime, showAvg = false, shiftS
             title: 'Least Productive',
             value: leastProductiveValue,
             icon: 'TrendingDown' as const,
-            color: 'text-red-500',
+            color: 'text-red-500' as const,
             tooltip: shiftStats
                 ? `Least productive shift: ${shiftStats.leastProductive.name}`
                 : `Least productive hour: ${stats.leastProductiveSlot}`
         }
     ]
 
+    // If bonus time is available, replace the least productive card with bonus
+    if (bonusTime !== undefined && bonusTime > 0) {
+        statCards[3] = {
+            id: 'bonus-time',
+            title: 'Bonus Banked',
+            value: formatTime(bonusTime),
+            icon: 'Clock' as const,
+            color: 'text-primary' as const,
+            tooltip: `Extra time banked! ${formatTime(bonusTime)} available for future hours`
+        }
+    }
+
+    // If showAvg is true, show average session time instead
     if (showAvg) {
         statCards[3] = {
             id: 'avg-session',
             title: 'Avg Session',
             value: formatTime(stats.avgSessionTime),
             icon: 'Clock' as const,
-            color: 'text-primary',
+            color: 'text-primary' as const,
             tooltip: `Average session duration`
         }
     }

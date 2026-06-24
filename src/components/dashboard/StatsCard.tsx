@@ -1,11 +1,10 @@
 import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Clock, Activity, TrendingUp, TrendingDown } from 'lucide-react'
+import { Clock, Activity, TrendingUp, TrendingDown, Banknote, Sparkles } from 'lucide-react'
 
 interface StatsCardProps {
     title: string
     value: string | number | React.ReactNode
-    icon: 'Clock' | 'Activity' | 'TrendingUp' | 'TrendingDown'
+    icon: 'Clock' | 'Activity' | 'TrendingUp' | 'TrendingDown' | 'Banknote' | 'Sparkles'
     color?: string
 }
 
@@ -14,6 +13,8 @@ const iconMap = {
     Activity: Activity,
     TrendingUp: TrendingUp,
     TrendingDown: TrendingDown,
+    Banknote: Banknote,
+    Sparkles: Sparkles,
 }
 
 const colorMap: Record<string, string> = {
@@ -38,15 +39,6 @@ export function StatsCard({ title, value, icon, color = 'text-primary' }: StatsC
                         <div className={`p-2 rounded-full bg-primary/10 ${colorClass}`}>
                             <Icon className="h-5 w-5" />
                         </div>
-                        {/* Optional: Add badge for new records */}
-                        {title === 'Focus Points' && typeof value === 'number' && value > 10 && (
-                            <Badge
-                                variant="default"
-                                className="absolute -top-2 -right-2 text-[10px] px-1.5 py-0.5"
-                            >
-                                🔥
-                            </Badge>
-                        )}
                     </div>
                 </div>
             </CardContent>
