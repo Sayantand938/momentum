@@ -1,10 +1,12 @@
 import { Card, CardContent } from '@/components/ui/card'
-import { Clock, Activity, TrendingUp, TrendingDown, Banknote, Sparkles } from 'lucide-react'
+import { Clock, Activity, TrendingUp, TrendingDown, CalendarDays } from 'lucide-react'
+
+type IconType = 'Clock' | 'Activity' | 'TrendingUp' | 'TrendingDown' | 'CalendarDays'
 
 interface StatsCardProps {
     title: string
     value: string | number | React.ReactNode
-    icon: 'Clock' | 'Activity' | 'TrendingUp' | 'TrendingDown' | 'Banknote' | 'Sparkles'
+    icon: IconType
     color?: string
 }
 
@@ -13,8 +15,7 @@ const iconMap = {
     Activity: Activity,
     TrendingUp: TrendingUp,
     TrendingDown: TrendingDown,
-    Banknote: Banknote,
-    Sparkles: Sparkles,
+    CalendarDays: CalendarDays,
 }
 
 const colorMap: Record<string, string> = {

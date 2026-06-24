@@ -5,6 +5,9 @@ import {
     TooltipTrigger,
 } from '@/components/ui/tooltip'
 import { StatsCard } from './StatsCard'
+import { Badge } from '@/components/ui/badge'
+
+type IconType = 'Clock' | 'TrendingUp' | 'TrendingDown' | 'Activity' | 'CalendarDays'
 
 interface Stats {
     totalTime: number
@@ -14,20 +17,40 @@ interface Stats {
     avgSessionTime: number
 }
 
+interface ExtraCard {
+    id: string
+    title: string
+    value: string | number
+    icon: IconType
+    color: string
+    tooltip: string
+}
+
 interface StatsSectionProps {
     title: string
     stats: Stats | null
     formatTime: (seconds: number) => string
-    showAvg?: boolean
     shiftStats?: {
         mostProductive: { name: string; totalSeconds: number },
         leastProductive: { name: string; totalSeconds: number }
     } | null
-    focusPoints?: number
     bonusTime?: number
+    showBonus?: boolean
+    extraCards?: {
+        extra1?: ExtraCard
+        extra2?: ExtraCard
+    }
 }
 
-export function StatsSection({ title, stats, formatTime, showAvg = false, shiftStats, focusPoints, bonusTime }: StatsSectionProps) {
+export function StatsSection({
+    title,
+    stats,
+    formatTime,
+    shiftStats,
+    bonusTime,
+    showBonus = false,
+    extraCards
+}: StatsSectionProps) {
     if (!stats) return null
 
     // If shiftStats is provided, use shift names instead of time slots
@@ -47,77 +70,110 @@ export function StatsSection({ title, stats, formatTime, showAvg = false, shiftS
         stats.leastProductiveSlot
     )
 
-    // Calculate total completed time (focus points × 30 minutes)
-    const totalCompletedTime = focusPoints !== undefined ? focusPoints * 30 * 60 : 0
-    const totalCompletedTimeStr = formatTime(totalCompletedTime)
+    // Base cards: Total Time, Most Productive, Least Productive
+    const statCards: {
+        id: string
+        title: string
+        value: string | React.ReactNode
+        icon: IconType
+        color: 'text-primary' | 'text-green-500' | 'text-red-500'
+        tooltip: string
+    }[] = [
+            {
+                id: 'total-time',
+                title: 'Total Studied',
+                value: formatTime(stats.totalTime),
+                icon: 'Clock',
+                color: 'text-primary',
+                tooltip: `Total time spent focusing`
+            },
+            {
+                id: 'most-productive',
+                title: 'Most Productive',
+                value: mostProductiveValue,
+                icon: 'TrendingUp',
+                color: 'text-green-500',
+                tooltip: shiftStats
+                    ? `Most productive shift: ${shiftStats.mostProductive.name}`
+                    : `Most productive hour: ${stats.mostProductiveSlot}`
+            },
+            {
+                id: 'least-productive',
+                title: 'Least Productive',
+                value: leastProductiveValue,
+                icon: 'TrendingDown',
+                color: 'text-red-500',
+                tooltip: shiftStats
+                    ? `Least productive shift: ${shiftStats.leastProductive.name}`
+                    : `Least productive hour: ${stats.leastProductiveSlot}`
+            }
+        ]
 
-    // Define stat cards with proper typing
-    const statCards = [
-        {
-            id: 'total-time',
-            title: 'Total Time',
-            value: formatTime(stats.totalTime),
-            icon: 'Clock' as const,
-            color: 'text-primary' as const,
-            tooltip: `Total time spent focusing`
-        },
-        {
-            id: 'focus-points',
-            title: 'Focus Points',
-            value: focusPoints !== undefined ? focusPoints : stats.totalSessions,
-            icon: 'Activity' as const,
-            color: 'text-primary' as const,
-            tooltip: `${focusPoints || 0} hours completed × 30m = ${totalCompletedTimeStr}`
-        },
-        {
-            id: 'most-productive',
-            title: 'Most Productive',
-            value: mostProductiveValue,
-            icon: 'TrendingUp' as const,
-            color: 'text-green-500' as const,
-            tooltip: shiftStats
-                ? `Most productive shift: ${shiftStats.mostProductive.name}`
-                : `Most productive hour: ${stats.mostProductiveSlot}`
-        },
-        {
-            id: 'least-productive',
-            title: 'Least Productive',
-            value: leastProductiveValue,
-            icon: 'TrendingDown' as const,
-            color: 'text-red-500' as const,
-            tooltip: shiftStats
-                ? `Least productive shift: ${shiftStats.leastProductive.name}`
-                : `Least productive hour: ${stats.leastProductiveSlot}`
-        }
-    ]
-
-    // If bonus time is available, replace the least productive card with bonus
-    if (bonusTime !== undefined && bonusTime > 0) {
-        statCards[3] = {
+    // Add Bonus card if showBonus and bonusTime > 0
+    if (showBonus && bonusTime !== undefined && bonusTime > 0) {
+        statCards.push({
             id: 'bonus-time',
             title: 'Bonus Banked',
             value: formatTime(bonusTime),
-            icon: 'Clock' as const,
-            color: 'text-primary' as const,
+            icon: 'Activity',
+            color: 'text-primary',
             tooltip: `Extra time banked! ${formatTime(bonusTime)} available for future hours`
-        }
+        })
     }
 
-    // If showAvg is true, show average session time instead
-    if (showAvg) {
-        statCards[3] = {
-            id: 'avg-session',
-            title: 'Avg Session',
-            value: formatTime(stats.avgSessionTime),
-            icon: 'Clock' as const,
-            color: 'text-primary' as const,
-            tooltip: `Average session duration`
+    // Add extra cards if provided
+    const extraCardsList = []
+    if (extraCards?.extra1) {
+        extraCardsList.push(extraCards.extra1)
+    }
+    if (extraCards?.extra2) {
+        extraCardsList.push(extraCards.extra2)
+    }
+
+    // Replace existing cards with extra cards
+    extraCardsList.forEach((extra, index) => {
+        const targetIndex = 2 + index // Start replacing from least productive
+        if (statCards[targetIndex]) {
+            statCards[targetIndex] = {
+                id: extra.id,
+                title: extra.title,
+                value: extra.value,
+                icon: extra.icon,
+                color: extra.color as 'text-primary' | 'text-green-500' | 'text-red-500',
+                tooltip: extra.tooltip
+            }
+        } else {
+            statCards.push({
+                id: extra.id,
+                title: extra.title,
+                value: extra.value,
+                icon: extra.icon,
+                color: extra.color as 'text-primary' | 'text-green-500' | 'text-red-500',
+                tooltip: extra.tooltip
+            })
         }
+    })
+
+    // Ensure we always have exactly 4 cards
+    while (statCards.length < 4) {
+        statCards.push({
+            id: `placeholder-${statCards.length}`,
+            title: '—',
+            value: '—',
+            icon: 'Clock',
+            color: 'text-primary',
+            tooltip: 'No data available'
+        })
     }
 
     return (
         <div className="space-y-4">
-            <h2 className="text-lg font-semibold">{title}</h2>
+            <div className="flex items-center gap-2">
+                <h2 className="text-lg font-semibold">{title}</h2>
+                <Badge variant="outline" className="text-xs">
+                    {stats.totalSessions} sessions
+                </Badge>
+            </div>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 {statCards.map((card) => (
                     <TooltipProvider key={card.id}>

@@ -12,32 +12,35 @@ import {
     formatShortDate,
     formatTimeString,
     getDurationSeconds,
-    formatDuration
+    formatDuration,
+    formatStatsTime
 } from '@/lib/utils'
 import { DATE_FORMATS } from '@/constants'
+import { calculateHourlyDistributionWithTimeBank } from '@/lib/hourlyUtils'
 
 const log = createLogger('useHistory')
+
+type ViewMode = 'actual' | 'normalized'
 
 export function useHistory() {
     const [allSessions, setAllSessions] = useState<Session[]>([])
     const [filteredSessions, setFilteredSessions] = useState<Session[]>([])
     const [loading, setLoading] = useState(true)
     const [selectedDate, setSelectedDate] = useState<Date>(new Date())
-    const [searchTerm, setSearchTerm] = useState('')
     const [isCalendarOpen, setIsCalendarOpen] = useState(false)
+    const [viewMode, setViewMode] = useState<ViewMode>('normalized')
 
     useEffect(() => {
         fetchSessions()
     }, [])
 
-    // Refetch when selected date changes
     useEffect(() => {
         fetchSessions()
     }, [selectedDate])
 
     useEffect(() => {
         filterSessions()
-    }, [allSessions, selectedDate, searchTerm])
+    }, [allSessions, selectedDate])
 
     const fetchSessions = async () => {
         try {
@@ -68,23 +71,43 @@ export function useHistory() {
     }
 
     const filterSessions = () => {
-        let filtered = allSessions.filter(session => {
+        const filtered = allSessions.filter(session => {
             const sessionDate = parseISO(session.start_at)
-            const isSameDate = isSameDay(sessionDate, selectedDate)
-            if (!isSameDate) return false
-
-            if (searchTerm) {
-                const dateStr = formatShortDate(session.start_at)
-                const duration = formatDuration(getDurationSeconds(session.start_at, session.end_at!))
-                const searchLower = searchTerm.toLowerCase()
-                return dateStr.toLowerCase().includes(searchLower) ||
-                    duration.toLowerCase().includes(searchLower)
-            }
-
-            return true
+            return isSameDay(sessionDate, selectedDate)
         })
-
         setFilteredSessions(filtered)
+    }
+
+    const getNormalizedData = () => {
+        if (filteredSessions.length === 0) return []
+
+        try {
+            const result = calculateHourlyDistributionWithTimeBank(filteredSessions)
+            const HOURS = Array.from({ length: 16 }, (_, i) => i + 8)
+
+            return result.hourlyData.map((slot, index) => {
+                const hour = HOURS[index]
+                return {
+                    hour,
+                    label: formatHourLabel(hour),
+                    totalSeconds: slot.totalSeconds,
+                    actualSeconds: slot.actualSeconds,
+                    bankUsed: slot.bankUsed,
+                    isComplete: slot.totalSeconds >= 1800,
+                    isOverflow: slot.isOverflow || false,
+                }
+            })
+        } catch (error) {
+            log.error('❌ Error calculating normalized data:', error)
+            return []
+        }
+    }
+
+    const formatHourLabel = (hour: number): string => {
+        if (hour === 0) return '12:00 AM'
+        if (hour < 12) return `${hour.toString().padStart(2, '0')}:00 AM`
+        if (hour === 12) return '12:00 PM'
+        return `${(hour - 12).toString().padStart(2, '0')}:00 PM`
     }
 
     const handleDateSelect = (date: Date | undefined) => {
@@ -94,25 +117,23 @@ export function useHistory() {
         }
     }
 
-    const clearSearch = () => {
-        setSearchTerm('')
-    }
-
     return {
         loading,
         filteredSessions,
         selectedDate,
-        searchTerm,
         isCalendarOpen,
-        setSearchTerm,
+        viewMode,
+        setViewMode,
         setIsCalendarOpen,
         handleDateSelect,
-        clearSearch,
         formatDate: formatShortDate,
         formatTime: formatTimeString,
+        formatStatsTime: formatStatsTime,
+        formatHourLabel,
         formatDuration: (startAt: string, endAt: string) => {
             const seconds = getDurationSeconds(startAt, endAt)
             return formatDuration(seconds)
         },
+        getNormalizedData,
     }
 }

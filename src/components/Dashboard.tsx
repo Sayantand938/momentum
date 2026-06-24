@@ -3,15 +3,12 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Spinner } from '@/components/ui/spinner'
 import { LayoutDashboard, Timer } from 'lucide-react'
 import { StatsSection } from './dashboard/StatsSection'
-import { WeeklyProgress } from './dashboard/WeeklyProgress'
-import { WeeklyRecords } from './dashboard/WeeklyRecords'
-import { HourlyDistribution } from './dashboard/HourlyDistribution'
 import { useDashboardStats } from './dashboard/useDashboardStats'
 import { getShiftStats } from './dashboard/shiftUtils'
-import { getFocusPointsWithTimeBank, getRemainingBank } from '@/lib/hourlyUtils'
+import type { Session } from '@/lib/supabase'
 
 function DashboardContent() {
-    const { loading, todayStats, weekStats, monthStats, weekSessions, monthSessions, todaySessions, formatTime } = useDashboardStats()
+    const { loading, todayStats, weekStats, monthStats, todaySessions, weekSessions, monthSessions, formatTime } = useDashboardStats()
 
     if (loading) {
         return (
@@ -23,25 +20,72 @@ function DashboardContent() {
 
     const hasData = todayStats || weekStats || monthStats
 
-    // Calculate shift stats for each period
+    // Calculate shift stats
     const todayShiftStats = todaySessions ? getShiftStats(todaySessions) : null
     const weekShiftStats = weekSessions ? getShiftStats(weekSessions) : null
     const monthShiftStats = monthSessions ? getShiftStats(monthSessions) : null
 
-    // Calculate Focus Points using Time Bank logic
-    const todayFocusPoints = todaySessions ? getFocusPointsWithTimeBank(todaySessions) : 0
-    const weekFocusPoints = weekSessions ? getFocusPointsWithTimeBank(weekSessions) : 0
-    const monthFocusPoints = monthSessions ? getFocusPointsWithTimeBank(monthSessions) : 0
+    // Calculate Focus Score for Today (percentage of sessions that reached 30 minutes)
+    const todayFocusScore = todaySessions && todaySessions.length > 0 ?
+        Math.round((todaySessions.filter(s => {
+            const duration = Math.floor((new Date(s.end_at!).getTime() - new Date(s.start_at).getTime()) / 1000)
+            return duration >= 1800
+        }).length / todaySessions.length) * 100) : 0
 
-    // Get remaining bank (bonus time)
-    const todayBonus = todaySessions ? getRemainingBank(todaySessions) : 0
+    // Find best day this week
+    const getBestDay = (sessions: Session[]): string => {
+        if (!sessions || sessions.length === 0) return 'No data'
+        const dayMap: Record<string, number> = {}
+        sessions.forEach(s => {
+            const day = new Date(s.start_at).toLocaleDateString('en-US', { weekday: 'short' })
+            const duration = Math.floor((new Date(s.end_at!).getTime() - new Date(s.start_at).getTime()) / 1000)
+            dayMap[day] = (dayMap[day] || 0) + duration
+        })
+        let bestDay = ''
+        let bestTime = 0
+        Object.entries(dayMap).forEach(([day, time]) => {
+            if (time > bestTime) {
+                bestTime = time
+                bestDay = day
+            }
+        })
+        return bestDay || 'No data'
+    }
+
+    // Calculate streak (consecutive days with sessions)
+    const getStreak = (sessions: Session[]): number => {
+        if (!sessions || sessions.length === 0) return 0
+        const days = new Set(sessions.map(s => new Date(s.start_at).toDateString()))
+        let streak = 0
+        const today = new Date()
+        for (let i = 0; i < 30; i++) {
+            const d = new Date(today)
+            d.setDate(d.getDate() - i)
+            if (days.has(d.toDateString())) {
+                streak++
+            } else {
+                break
+            }
+        }
+        return streak
+    }
+
+    const weekBestDay = weekSessions ? getBestDay(weekSessions) : 'No data'
+    const monthStreak = monthSessions ? getStreak(monthSessions) : 0
 
     return (
-        <div className="container max-w-6xl mx-auto p-4 pt-2">
+        <div className="container max-w-4xl mx-auto p-4 pt-2">
             {/* Header */}
             <div className="flex items-center gap-3 mb-6">
                 <LayoutDashboard className="h-8 w-8 text-primary" />
                 <h1 className="text-2xl font-bold">Dashboard</h1>
+                <span className="text-xs text-muted-foreground ml-auto">
+                    {new Date().toLocaleDateString('en-US', {
+                        weekday: 'long',
+                        month: 'long',
+                        day: 'numeric'
+                    })}
+                </span>
             </div>
 
             {/* Today Section */}
@@ -50,16 +94,26 @@ function DashboardContent() {
                 stats={todayStats}
                 formatTime={formatTime}
                 shiftStats={todayShiftStats}
-                focusPoints={todayFocusPoints}
-                bonusTime={todayBonus}
+                showBonus={true}
+                extraCards={{
+                    extra1: {
+                        id: 'completion-rate',
+                        title: 'Completion Rate',
+                        value: todayStats ? `${Math.round((todayStats.totalTime / (8 * 3600)) * 100)}%` : '0%',
+                        icon: 'TrendingUp',
+                        color: 'text-green-500',
+                        tooltip: 'Progress toward 8-hour daily goal'
+                    },
+                    extra2: {
+                        id: 'focus-score',
+                        title: 'Focus Score',
+                        value: `${todayFocusScore}%`,
+                        icon: 'Activity',
+                        color: 'text-primary',
+                        tooltip: 'Percentage of sessions that reached 30 minutes'
+                    }
+                }}
             />
-
-            {/* Hourly Distribution - Today */}
-            {todaySessions && todaySessions.length > 0 && (
-                <div className="mt-4">
-                    <HourlyDistribution sessions={todaySessions} />
-                </div>
-            )}
 
             {/* This Week Section */}
             <div className="mt-8">
@@ -68,14 +122,26 @@ function DashboardContent() {
                     stats={weekStats}
                     formatTime={formatTime}
                     shiftStats={weekShiftStats}
-                    focusPoints={weekFocusPoints}
+                    showBonus={true}
+                    extraCards={{
+                        extra1: {
+                            id: 'avg-daily',
+                            title: 'Avg Daily',
+                            value: weekStats ? formatTime(Math.round(weekStats.totalTime / 7)) : '0m',
+                            icon: 'Clock',
+                            color: 'text-primary',
+                            tooltip: 'Average time per day this week'
+                        },
+                        extra2: {
+                            id: 'best-day',
+                            title: 'Best Day',
+                            value: weekBestDay,
+                            icon: 'TrendingUp',
+                            color: 'text-green-500',
+                            tooltip: 'Most productive day this week'
+                        }
+                    }}
                 />
-
-                {weekSessions && weekSessions.length > 0 && (
-                    <div className="mt-4">
-                        <WeeklyProgress sessions={weekSessions} />
-                    </div>
-                )}
             </div>
 
             {/* This Month Section */}
@@ -85,14 +151,26 @@ function DashboardContent() {
                     stats={monthStats}
                     formatTime={formatTime}
                     shiftStats={monthShiftStats}
-                    focusPoints={monthFocusPoints}
+                    showBonus={true}
+                    extraCards={{
+                        extra1: {
+                            id: 'days-active',
+                            title: 'Active Days',
+                            value: monthSessions ? new Set(monthSessions.map(s => new Date(s.start_at).toDateString())).size : 0,
+                            icon: 'CalendarDays',
+                            color: 'text-primary',
+                            tooltip: 'Number of days with at least one session'
+                        },
+                        extra2: {
+                            id: 'streak',
+                            title: 'Streak',
+                            value: `${monthStreak} day${monthStreak !== 1 ? 's' : ''}`,
+                            icon: 'Activity',
+                            color: 'text-primary',
+                            tooltip: 'Consecutive days with sessions'
+                        }
+                    }}
                 />
-
-                {monthSessions && monthSessions.length > 0 && (
-                    <div className="mt-4">
-                        <WeeklyRecords sessions={monthSessions} />
-                    </div>
-                )}
             </div>
 
             {/* No Data Message */}

@@ -7,22 +7,30 @@ import {
     TableRow,
 } from '@/components/ui/table'
 import { type Session } from '@/lib/supabase'
+import { cn } from '@/lib/utils'
 
 interface HistoryTableProps {
     sessions: Session[]
     formatDate: (timestamp: string) => string
     formatTime: (timestamp: string) => string
     formatDuration: (startAt: string, endAt: string) => string
+    showDate?: boolean
 }
 
-export function HistoryTable({ sessions, formatDate, formatTime, formatDuration }: HistoryTableProps) {
+export function HistoryTable({
+    sessions,
+    formatDate,
+    formatTime,
+    formatDuration,
+    showDate = true,
+}: HistoryTableProps) {
     return (
         <div className="rounded-lg border border-border/40 overflow-x-auto">
             <Table>
                 <TableHeader>
                     <TableRow className="border-b border-border/40 bg-muted/30">
                         <TableHead className="w-16 text-center">#</TableHead>
-                        <TableHead>Date</TableHead>
+                        {showDate && <TableHead>Date</TableHead>}
                         <TableHead>Start Time</TableHead>
                         <TableHead>End Time</TableHead>
                         <TableHead className="text-right">Duration</TableHead>
@@ -40,9 +48,11 @@ export function HistoryTable({ sessions, formatDate, formatTime, formatDuration 
                             <TableCell className="text-center text-muted-foreground">
                                 {index + 1}
                             </TableCell>
-                            <TableCell className="font-medium whitespace-nowrap">
-                                {formatDate(session.start_at)}
-                            </TableCell>
+                            {showDate && (
+                                <TableCell className="font-medium whitespace-nowrap">
+                                    {formatDate(session.start_at)}
+                                </TableCell>
+                            )}
                             <TableCell className="whitespace-nowrap">
                                 {formatTime(session.start_at)}
                             </TableCell>
@@ -58,8 +68,4 @@ export function HistoryTable({ sessions, formatDate, formatTime, formatDuration 
             </Table>
         </div>
     )
-}
-
-function cn(...classes: (string | boolean | undefined)[]) {
-    return classes.filter(Boolean).join(' ')
 }
